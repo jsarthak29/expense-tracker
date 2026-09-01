@@ -11,3 +11,6 @@ venv/
 # IDE
 .vscode/
 .idea/
+
+# Local SQLite database
+*.db
