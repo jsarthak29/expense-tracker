@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.database import Base, engine
-from app.routers import expenses
+from app.routers import expenses, summary
 
 
 @asynccontextmanager
@@ -19,3 +19,4 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Expense Tracker API", version="1.0.0", lifespan=lifespan)
 
 app.include_router(expenses.router)
+app.include_router(summary.router)

@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import datetime as dt
+from decimal import Decimal
+
 from sqlalchemy.orm import Session
 
 from app import repository
 from app.models import Expense
 from app.repository import ExpenseFilters
-from app.schemas import ExpenseIn, SortField, SortOrder
+from app.schemas import CategoryTotal, ExpenseIn, SortField, SortOrder, SummaryOut
 
 
 def list_expenses(
@@ -42,3 +45,28 @@ def delete_expense(db: Session, expense_id: int) -> bool:
         return False
     repository.delete_expense(db, expense)
     return True
+
+
+def month_window(month: str) -> tuple[dt.date, dt.date]:
+    """Turn "YYYY-MM" into a half-open [start, end) range.
+
+    Half-open beats BETWEEN here: no leap-year or 30-vs-31 day arithmetic, and
+    it stays correct if `date` ever becomes a timestamp.
+    """
+    year, month_number = (int(part) for part in month.split("-"))
+    start = dt.date(year, month_number, 1)
+    end = dt.date(year + 1, 1, 1) if month_number == 12 else dt.date(year, month_number + 1, 1)
+    return start, end
+
+
+def monthly_summary(db: Session, month: str) -> SummaryOut:
+    start, end = month_window(month)
+    rows = repository.totals_by_category(db, start=start, end=end)
+
+    by_category = [
+        CategoryTotal(category=category or "", total=float(total))
+        for category, total in rows
+    ]
+    total = sum((Decimal(str(row.total)) for row in by_category), Decimal("0"))
+
+    return SummaryOut(month=month, total=float(total), by_category=by_category)
