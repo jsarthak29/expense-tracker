@@ -1,0 +1,301 @@
+id,title,amount,category,date,notes
+1,Pharmacy,696.09,Health,2026-03-12,
+2,Petrol,4747.61,Transport,2026-05-09,reimbursable
+3,Internet — ACT,899.00,Utilities,2026-06-22,
+4,Metro card top-up,530.60,Transport,2026-06-02,
+5,Pharmacy,1785.87,Health,2026-06-29,office expense
+6,Petrol,3739.44,,2026-05-11,
+7,Ikea trip,6545.31,Shopping,2026-01-25,reimbursable
+8,Doctor consultation,838.79,Health,2026-04-25,
+9,Ikea trip,5113.66,Shopping,2026-03-29,split with roommate
+10,Airport cab,1228.66,Travel,2026-06-23,
+11,Spotify family,179.00,Entertainment,2026-03-17,recurring
+12,Amazon — books,564.02,Shopping,2026-03-14,reimbursable
+13,Monthly rent,43835.93,Rent,2026-04-26,
+14,Airport cab,1433.74,Travel,2026-06-29,split with roommate
+15,Flight tickets,25615.40,Travel,2026-06-22,
+16,Monthly rent,31308.99,Rent,2026-03-14,recurring
+17,Groceries — DMart,2421.02,Food,2026-06-15,
+18,Myntra order,1221.46,Shopping,2026-06-08,split with roommate
+19,Lunch at Toit,1650.71,Food,2026-05-10,
+20,Ikea trip,6345.12,Shopping,2026-06-03,reimbursable
+21,Uber to office,364.36,Transport,2026-03-16,
+22,Petrol,4624.61,Transport,2026-03-10,recurring
+23,Electricity bill,3088.95,Utilities,2026-01-22,one-time
+24,Airport cab,1124.60,Travel,2026-01-18,recurring
+25,Monthly rent,25542.24,Rent,2026-06-29,office expense
+26,Lunch at Toit,1565.71,Food,2026-07-04,
+27,Water bill,323.84,Utilities,2026-01-16,reimbursable
+28,Electricity bill,2691.43,Utilities,2026-02-12,
+29,Flight tickets,25194.50,Travel,2026-03-08,one-time
+30,Pharmacy,1509.41,Health,2026-05-18,
+31,Coffee,389.93,Food,2026-01-30,
+32,Dinner with team,1076.54,Food,2026-05-23,one-time
+33,Electricity bill,2196.23,,2026-02-14,one-time
+34,Airport cab,1670.51,Travel,2026-06-29,
+35,Hotel stay,17770.79,Travel,2026-06-27,
+36,Water bill,533.26,Utilities,2026-03-31,recurring
+37,Monthly rent,43124.56,Rent,2026-04-13,
+38,Groceries — DMart,2795.11,Food,2026-02-04,
+39,Electricity bill,1880.92,Utilities,2026-07-05,
+40,Petrol,2690.05,Transport,2026-03-12,
+41,Hotel stay,5069.50,Travel,2026-03-21,
+42,Doctor consultation,604.69,Health,2026-07-07,
+43,Concert,7805.86,Entertainment,2026-05-16,reimbursable
+44,Flight tickets,13557.91,Travel,2026-05-01,
+45,Gas cylinder,1137.20,Utilities,2026-06-22,split with roommate
+46,Gym membership,2917.97,,2026-02-13,one-time
+47,Hotel stay,5822.23,Travel,2026-01-25,
+48,Auto to station,143.92,Transport,2026-02-15,
+49,Movie tickets — PVR,338.25,Entertainment,2026-06-19,
+50,Auto to station,188.79,Transport,2026-02-25,
+51,Petrol,2758.09,Transport,2026-07-07,
+52,Gym membership,2278.82,Health,2026-03-04,reimbursable
+53,Electricity bill,3296.61,Utilities,2026-04-28,recurring
+54,Uber to office,323.80,Transport,2026-06-04,reimbursable
+55,Water bill,339.95,Utilities,2026-03-18,
+56,Internet — ACT,899.00,Utilities,2026-03-31,one-time
+57,Monthly rent,34764.37,Rent,2026-02-16,one-time
+58,Lunch at Toit,1304.48,Food,2026-04-29,one-time
+59,Gym membership,3493.21,Health,2026-05-25,
+60,Monthly rent,44081.72,Rent,2026-03-03,recurring
+61,Gas cylinder,1297.60,Utilities,2026-05-10,
+62,Monthly rent,36153.17,Rent,2026-06-07,recurring
+63,Netflix subscription,649.00,Entertainment,2026-04-21,
+64,Gym membership,3133.63,Health,2026-06-23,
+65,Spotify family,179.00,Entertainment,2026-05-25,recurring
+66,Flight tickets,19857.86,Travel,2026-05-21,
+67,Groceries — DMart,1870.91,Food,2026-02-05,
+68,Internet — ACT,899.00,Utilities,2026-04-25,one-time
+69,Monthly rent,32092.63,Rent,2026-06-30,one-time
+70,Zomato order,295.68,Food,2026-03-19,
+71,Electricity bill,3181.27,Utilities,2026-05-15,
+72,Ikea trip,5039.78,,2026-01-19,
+73,Coffee,247.67,,2026-02-01,
+74,Zomato order,492.94,Food,2026-06-05,
+75,Petrol,4355.03,Transport,2026-04-04,recurring
+76,Monthly rent,30157.92,Rent,2026-03-08,recurring
+77,Petrol,3726.18,Transport,2026-05-28,
+78,Movie tickets — PVR,481.48,Entertainment,2026-07-05,
+79,Myntra order,3821.90,Shopping,2026-01-24,
+80,Coffee,190.56,Food,2026-05-19,office expense
+81,Metro card top-up,544.19,Transport,2026-03-11,reimbursable
+82,Hotel stay,7485.18,Travel,2026-02-25,
+83,Zomato order,822.32,Food,2026-03-18,
+84,Dinner with team,1582.54,Food,2026-05-16,
+85,Internet — ACT,899.00,Utilities,2026-01-17,one-time
+86,Hotel stay,13022.87,Travel,2026-06-26,one-time
+87,Petrol,4042.18,Transport,2026-04-23,one-time
+88,Ikea trip,3174.13,Shopping,2026-06-17,
+89,Ikea trip,3008.46,Shopping,2026-03-15,recurring
+90,Groceries — DMart,1817.24,,2026-04-07,office expense
+91,Concert,6985.25,Entertainment,2026-07-08,split with roommate
+92,Auto to station,159.83,Transport,2026-06-04,
+93,Ikea trip,6634.07,Shopping,2026-04-11,
+94,Groceries — DMart,2973.52,Food,2026-04-05,
+95,Amazon — books,1217.99,Shopping,2026-03-09,
+96,Lunch at Toit,1434.19,Food,2026-06-12,
+97,Gas cylinder,1116.98,Utilities,2026-06-30,
+98,Monthly rent,33044.17,Rent,2026-04-15,
+99,Monthly rent,40250.12,Rent,2026-06-09,split with roommate
+100,Monthly rent,42025.19,Rent,2026-02-05,split with roommate
+101,Gym membership,2426.10,Health,2026-06-12,
+102,Netflix subscription,649.00,,2026-03-17,
+103,Monthly rent,36448.48,Rent,2026-04-06,recurring
+104,Doctor consultation,1435.22,Health,2026-06-13,recurring
+105,Zomato order,700.89,Food,2026-02-01,
+106,Gym membership,2651.23,Health,2026-05-30,
+107,Auto to station,216.94,Transport,2026-03-22,recurring
+108,Gas cylinder,1268.95,Utilities,2026-04-03,reimbursable
+109,Monthly rent,35098.26,Rent,2026-02-03,split with roommate
+110,Hotel stay,15146.74,Travel,2026-04-27,
+111,Gas cylinder,1208.95,Utilities,2026-06-23,split with roommate
+112,Lunch at Toit,1411.19,Food,2026-03-12,one-time
+113,Coffee,158.26,Food,2026-04-03,
+114,Lunch at Toit,1420.80,Food,2026-03-01,
+115,Auto to station,89.65,Transport,2026-05-21,
+116,Water bill,334.90,Utilities,2026-03-29,
+117,Netflix subscription,649.00,Entertainment,2026-02-15,
+118,Movie tickets — PVR,349.22,Entertainment,2026-04-11,recurring
+119,Ikea trip,4624.29,Shopping,2026-03-23,
+120,Uber to office,120.44,Transport,2026-06-13,
+121,Monthly rent,30186.41,Rent,2026-04-02,
+122,Concert,7074.31,Entertainment,2026-03-07,reimbursable
+123,Metro card top-up,353.86,Transport,2026-05-24,
+124,Uber to office,206.79,Transport,2026-02-06,
+125,Airport cab,1045.51,Travel,2026-05-19,one-time
+126,Groceries — DMart,4099.64,Food,2026-03-31,
+127,Monthly rent,29465.86,Rent,2026-07-09,office expense
+128,Gas cylinder,1214.82,Utilities,2026-06-06,recurring
+129,Flight tickets,13520.60,Travel,2026-04-13,reimbursable
+130,Spotify family,179.00,Entertainment,2026-02-15,
+131,Gym membership,3426.98,Health,2026-03-30,
+132,Uber to office,239.82,Transport,2026-02-16,
+133,Groceries — DMart,3905.88,Food,2026-05-12,
+134,Flight tickets,14539.48,Travel,2026-01-26,split with roommate
+135,Uber to office,305.72,Transport,2026-06-07,recurring
+136,Coffee,341.87,Food,2026-04-05,
+137,Myntra order,4565.94,Shopping,2026-05-21,
+138,Monthly rent,33228.47,Rent,2026-03-24,reimbursable
+139,Amazon — books,1476.45,Shopping,2026-02-06,office expense
+140,Hotel stay,6780.88,Travel,2026-06-05,
+141,Flight tickets,13330.15,Travel,2026-03-09,one-time
+142,Monthly rent,29271.21,Rent,2026-07-14,split with roommate
+143,Petrol,2475.59,Transport,2026-02-24,split with roommate
+144,Gas cylinder,1159.94,Utilities,2026-07-13,
+145,Monthly rent,44896.96,Rent,2026-02-13,
+146,Spotify family,179.00,Entertainment,2026-03-23,
+147,Pharmacy,465.77,Health,2026-05-24,
+148,Doctor consultation,1925.27,Health,2026-02-10,recurring
+149,Internet — ACT,899.00,Utilities,2026-03-31,reimbursable
+150,Doctor consultation,1763.27,Health,2026-02-11,recurring
+151,Lunch at Toit,854.43,Food,2026-03-10,split with roommate
+152,Airport cab,836.52,Travel,2026-06-29,one-time
+153,Netflix subscription,649.00,Entertainment,2026-05-09,
+154,Petrol,4245.72,Transport,2026-06-27,
+155,Metro card top-up,349.31,Transport,2026-01-26,split with roommate
+156,Metro card top-up,216.71,Transport,2026-06-27,
+157,Monthly rent,38304.53,Rent,2026-05-12,reimbursable
+158,Lunch at Toit,1560.86,Food,2026-03-08,recurring
+159,Monthly rent,25241.08,Rent,2026-07-01,recurring
+160,Water bill,373.37,Utilities,2026-04-23,
+161,Gym membership,3320.10,Health,2026-03-25,
+162,Gym membership,2424.18,Health,2026-03-04,
+163,Internet — ACT,899.00,Utilities,2026-03-16,office expense
+164,Water bill,464.84,Utilities,2026-04-10,
+165,Spotify family,179.00,Entertainment,2026-05-19,office expense
+166,Monthly rent,26407.62,Rent,2026-06-13,reimbursable
+167,Electricity bill,3765.22,Utilities,2026-04-19,
+168,Uber to office,245.74,Transport,2026-03-12,
+169,Groceries — DMart,2859.28,Food,2026-05-06,
+170,Doctor consultation,807.13,Health,2026-03-06,
+171,Coffee,413.99,Food,2026-02-03,
+172,Groceries — DMart,3602.08,Food,2026-01-27,office expense
+173,Movie tickets — PVR,319.18,Entertainment,2026-04-01,
+174,Gym membership,2713.85,Health,2026-04-21,office expense
+175,Monthly rent,33679.76,Rent,2026-03-03,
+176,Metro card top-up,342.63,Transport,2026-07-06,reimbursable
+177,Flight tickets,26522.62,Travel,2026-02-22,
+178,Hotel stay,9061.02,Travel,2026-01-19,office expense
+179,Hotel stay,15832.53,Travel,2026-05-03,one-time
+180,Gas cylinder,1163.83,Utilities,2026-05-22,
+181,Coffee,358.52,Food,2026-04-07,
+182,Flight tickets,12738.48,Travel,2026-06-19,
+183,Groceries — DMart,4170.19,Food,2026-04-15,split with roommate
+184,Uber to office,207.02,Transport,2026-05-07,
+185,Netflix subscription,649.00,Entertainment,2026-05-01,
+186,Flight tickets,11895.17,Travel,2026-05-14,
+187,Dinner with team,1181.17,Food,2026-03-16,one-time
+188,Zomato order,490.00,Food,2026-02-10,
+189,Zomato order,676.97,Food,2026-06-04,split with roommate
+190,Gas cylinder,1292.28,Utilities,2026-07-05,split with roommate
+191,Uber to office,133.71,Transport,2026-06-11,reimbursable
+192,Netflix subscription,649.00,Entertainment,2026-07-06,
+193,Pharmacy,1235.99,Health,2026-02-24,one-time
+194,Lunch at Toit,966.74,Food,2026-06-25,reimbursable
+195,Netflix subscription,649.00,Entertainment,2026-05-12,reimbursable
+196,Monthly rent,27085.50,Rent,2026-06-27,
+197,Water bill,344.86,Utilities,2026-07-04,recurring
+198,Gym membership,2322.02,Health,2026-06-16,one-time
+199,Internet — ACT,899.00,Utilities,2026-04-17,office expense
+200,Coffee,196.69,Food,2026-02-01,split with roommate
+201,Water bill,568.22,Utilities,2026-07-03,recurring
+202,Dinner with team,2014.94,Food,2026-06-27,
+203,Electricity bill,3324.62,Utilities,2026-02-19,
+204,Water bill,301.07,Utilities,2026-05-24,
+205,Spotify family,179.00,Entertainment,2026-03-22,split with roommate
+206,Flight tickets,15816.38,Travel,2026-02-27,one-time
+207,Pharmacy,1642.22,Health,2026-07-07,reimbursable
+208,Concert,6319.42,Entertainment,2026-03-16,
+209,Monthly rent,28509.21,Rent,2026-02-01,
+210,Spotify family,179.00,Entertainment,2026-04-06,
+211,Zomato order,764.29,Food,2026-04-05,split with roommate
+212,Coffee,411.47,Food,2026-01-22,
+213,Spotify family,179.00,Entertainment,2026-05-31,one-time
+214,Netflix subscription,649.00,Entertainment,2026-05-13,split with roommate
+215,Myntra order,1295.22,Shopping,2026-05-12,
+216,Concert,4037.23,Entertainment,2026-01-20,recurring
+217,Ikea trip,3543.53,Shopping,2026-01-19,
+218,Gym membership,2828.57,Health,2026-06-15,reimbursable
+219,Pharmacy,352.80,Health,2026-04-21,split with roommate
+220,Uber to office,226.81,,2026-01-22,recurring
+221,Amazon — books,854.87,Shopping,2026-02-01,reimbursable
+222,Pharmacy,1615.24,Health,2026-02-06,office expense
+223,Ikea trip,5698.21,Shopping,2026-03-02,
+224,Netflix subscription,649.00,Entertainment,2026-05-02,split with roommate
+225,Hotel stay,10210.69,Travel,2026-06-18,
+226,Pharmacy,440.30,Health,2026-04-27,
+227,Zomato order,715.91,Food,2026-06-02,office expense
+228,Monthly rent,36767.72,Rent,2026-05-23,split with roommate
+229,Petrol,4085.47,Transport,2026-01-18,
+230,Monthly rent,39005.01,Rent,2026-04-28,split with roommate
+231,Ikea trip,4756.33,Shopping,2026-05-18,reimbursable
+232,Movie tickets — PVR,565.22,Entertainment,2026-04-18,
+233,Concert,7479.70,Entertainment,2026-06-05,
+234,Netflix subscription,649.00,Entertainment,2026-06-14,one-time
+235,Airport cab,823.70,Travel,2026-04-08,reimbursable
+236,Ikea trip,6276.39,Shopping,2026-06-13,recurring
+237,Amazon — books,1578.58,Shopping,2026-02-25,
+238,Airport cab,1621.87,Travel,2026-04-28,split with roommate
+239,Gym membership,2721.30,Health,2026-07-03,
+240,Airport cab,1483.47,Travel,2026-02-17,
+241,Monthly rent,44158.40,Rent,2026-03-27,one-time
+242,Amazon — books,2067.36,Shopping,2026-02-04,
+243,Ikea trip,8560.20,Shopping,2026-01-22,one-time
+244,Groceries — DMart,2222.05,,2026-06-29,office expense
+245,Monthly rent,34056.27,Rent,2026-04-27,
+246,Pharmacy,871.51,Health,2026-05-30,split with roommate
+247,Electricity bill,2261.94,Utilities,2026-06-07,
+248,Airport cab,1011.60,Travel,2026-03-05,
+249,Electricity bill,3064.63,Utilities,2026-06-30,one-time
+250,Electricity bill,1837.33,Utilities,2026-01-30,
+251,Water bill,375.78,Utilities,2026-04-07,reimbursable
+252,Dinner with team,2754.59,Food,2026-06-07,one-time
+253,Auto to station,208.17,,2026-05-25,one-time
+254,Netflix subscription,649.00,Entertainment,2026-03-10,one-time
+255,Concert,7243.18,Entertainment,2026-03-07,recurring
+256,Monthly rent,32478.75,Rent,2026-04-25,
+257,Lunch at Toit,1173.06,Food,2026-05-17,office expense
+258,Uber to office,329.12,Transport,2026-06-08,
+259,Doctor consultation,1940.81,Health,2026-06-25,
+260,Water bill,283.01,Utilities,2026-05-30,
+261,Amazon — books,1841.25,Shopping,2026-07-03,reimbursable
+262,Hotel stay,5607.75,Travel,2026-07-08,
+263,Monthly rent,26923.36,Rent,2026-03-24,recurring
+264,Groceries — DMart,3847.01,Food,2026-06-28,
+265,Netflix subscription,649.00,Entertainment,2026-03-26,split with roommate
+266,Monthly rent,39317.74,Rent,2026-04-09,
+267,Lunch at Toit,671.29,Food,2026-07-15,office expense
+268,Electricity bill,1985.39,Utilities,2026-02-05,
+269,Pharmacy,1385.00,Health,2026-01-30,
+270,Flight tickets,11462.38,Travel,2026-07-15,
+271,Monthly rent,36253.29,Rent,2026-03-06,office expense
+272,Monthly rent,35665.61,Rent,2026-04-27,
+273,Concert,4838.76,Entertainment,2026-02-09,
+274,Auto to station,125.69,Transport,2026-03-09,
+275,Groceries — DMart,4533.76,Food,2026-02-24,split with roommate
+276,Internet — ACT,899.00,Utilities,2026-02-08,
+277,Monthly rent,39314.46,Rent,2026-04-05,
+278,Pharmacy,1749.57,Health,2026-01-26,
+279,Monthly rent,37108.12,Rent,2026-06-08,reimbursable
+280,Groceries — DMart,3344.31,Food,2026-01-23,reimbursable
+281,Movie tickets — PVR,570.78,Entertainment,2026-05-25,recurring
+282,Myntra order,2531.98,Shopping,2026-05-10,
+283,Monthly rent,40878.39,Rent,2026-04-19,
+284,Netflix subscription,649.00,,2026-04-01,one-time
+285,Internet — ACT,899.00,Utilities,2026-07-05,recurring
+286,Amazon — books,1298.92,Shopping,2026-02-08,
+287,Flight tickets,9533.81,Travel,2026-04-06,recurring
+288,Gym membership,3159.81,Health,2026-06-02,
+289,Internet — ACT,899.00,Utilities,2026-04-06,one-time
+290,Uber to office,336.91,Transport,2026-05-03,
+291,Amazon — books,1689.79,Shopping,2026-07-11,
+292,Flight tickets,14537.15,Travel,2026-05-27,
+293,Coffee,217.48,Food,2026-03-10,recurring
+294,Myntra order,2300.15,Shopping,2026-05-23,
+295,Zomato order,552.92,Food,2026-03-23,reimbursable
+296,Myntra order,4579.43,Shopping,2026-05-14,one-time
+297,Electricity bill,2914.63,Utilities,2026-03-16,office expense
+298,Myntra order,2540.82,Shopping,2026-01-29,
+299,Monthly rent,26161.84,,2026-06-24,split with roommate
+300,Gym membership,2916.24,Health,2026-04-13,

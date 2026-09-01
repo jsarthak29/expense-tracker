@@ -1,0 +1,113 @@
+openapi: 3.0.3
+info:
+  title: Expense Tracker API — Contract
+  version: 1.0.0
+  description: |
+    The API surface the shipped `ui/` frontend consumes. Build these endpoints in your backend and the UI will progressively light up.
+
+    The candidate designs everything *inside* the service (schema, folder structure, validation, storage details) but the wire contract shown here is fixed.
+
+servers:
+  - url: http://localhost:8000
+    description: Local backend
+
+paths:
+  /expenses:
+    get:
+      summary: List expenses (filter + sort + paginate)
+      parameters:
+        - { name: page,        in: query, schema: { type: integer, default: 1  } }
+        - { name: page_size,   in: query, schema: { type: integer, default: 50 } }
+        - { name: sort,        in: query, schema: { type: string, example: date } }
+        - { name: order,       in: query, schema: { type: string, enum: [asc, desc], default: desc } }
+        - { name: category,    in: query, schema: { type: string } }
+        - { name: q,           in: query, schema: { type: string }, description: "Case-insensitive search across title + notes" }
+        - { name: date_from,   in: query, schema: { type: string, format: date } }
+        - { name: date_to,     in: query, schema: { type: string, format: date } }
+        - { name: amount_min,  in: query, schema: { type: number } }
+        - { name: amount_max,  in: query, schema: { type: number } }
+      responses:
+        "200":
+          description: Page of expenses. **Total-across-filter lives in the `X-Total-Count` response header**, not in the body.
+          headers:
+            X-Total-Count:
+              schema: { type: integer }
+              description: Total records matching the filters (before pagination)
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Expense" }
+    post:
+      summary: Create an expense
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExpenseInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Expense" }
+
+  /expenses/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer } }
+    delete:
+      summary: Delete an expense
+      responses:
+        "204": { description: Deleted }
+        "404": { description: Not found }
+
+  /summary:
+    get:
+      summary: Monthly spend breakdown by category
+      parameters:
+        - name: month
+          in: query
+          required: true
+          description: "YYYY-MM"
+          schema: { type: string, example: "2026-06" }
+      responses:
+        "200":
+          description: Total + per-category breakdown for the given month
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [month, total, by_category]
+                properties:
+                  month: { type: string, example: "2026-06" }
+                  total: { type: number, example: 42_517.45 }
+                  by_category:
+                    type: array
+                    items:
+                      type: object
+                      required: [category, total]
+                      properties:
+                        category: { type: string, example: "Food" }
+                        total:    { type: number, example: 4_237.10 }
+
+components:
+  schemas:
+    Expense:
+      type: object
+      required: [id, title, amount, date]
+      properties:
+        id:       { type: integer, example: 17 }
+        title:    { type: string,  example: "Lunch at Toit" }
+        amount:   { type: number,  example: 1650.71 }
+        category: { type: string,  example: "Food", description: "May be an empty string for a small fraction of seeded rows — intentional data-quality quirk." }
+        date:     { type: string,  format: date, example: "2026-05-10" }
+        notes:    { type: string,  example: "reimbursable" }
+    ExpenseInput:
+      type: object
+      required: [title, amount, date]
+      properties:
+        title:    { type: string }
+        amount:   { type: number }
+        category: { type: string }
+        date:     { type: string, format: date }
+        notes:    { type: string }

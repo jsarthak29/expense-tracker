@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Expenses</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Expenses</h1>
+    <p class="tagline">
+      This UI expects your backend at <code>/</code> (same origin). Mount the
+      <code>ui/</code> folder as static files in your FastAPI app, then browse
+      <code>http://localhost:8000</code>.
+    </p>
+  </header>
+
+  <div id="error-banner" hidden>
+    <strong>API error</strong>
+    <span id="error-text"></span>
+    <button type="button" id="error-dismiss" aria-label="dismiss">×</button>
+  </div>
+
+  <main>
+    <section class="card">
+      <h2>Monthly breakdown</h2>
+      <div class="chart-controls">
+        <label>Month
+          <input type="month" id="chart-month" />
+        </label>
+        <span id="chart-total" class="chart-total">—</span>
+      </div>
+      <canvas id="chart" height="120"></canvas>
+    </section>
+
+    <section class="card">
+      <h2>Add expense</h2>
+      <form id="add-form">
+        <label>Title <input required name="title" /></label>
+        <label>Amount <input required type="number" step="0.01" min="0" name="amount" /></label>
+        <label>Category <input list="cat-list" name="category" /></label>
+        <datalist id="cat-list">
+          <option value="Food"><option value="Transport"><option value="Utilities">
+          <option value="Entertainment"><option value="Shopping"><option value="Health">
+          <option value="Rent"><option value="Travel">
+        </datalist>
+        <label>Date <input required type="date" name="date" /></label>
+        <label class="wide">Notes <input name="notes" /></label>
+        <button type="submit">Add</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Browse expenses</h2>
+
+      <form id="filter-form" class="filters">
+        <label>Category <input list="cat-list" name="category" /></label>
+        <label>Search <input name="q" placeholder="title or notes" /></label>
+        <label>From <input type="date" name="date_from" /></label>
+        <label>To <input type="date" name="date_to" /></label>
+        <label>Min ₹ <input type="number" step="0.01" name="amount_min" /></label>
+        <label>Max ₹ <input type="number" step="0.01" name="amount_max" /></label>
+        <label>Sort by
+          <select name="sort">
+            <option value="date">date</option>
+            <option value="amount">amount</option>
+            <option value="category">category</option>
+            <option value="title">title</option>
+          </select>
+        </label>
+        <label>Order
+          <select name="order">
+            <option value="desc">desc</option>
+            <option value="asc">asc</option>
+          </select>
+        </label>
+        <button type="submit">Apply</button>
+        <button type="button" id="filter-reset">Reset</button>
+      </form>
+
+      <div class="table-wrap">
+        <table id="expenses-table">
+          <thead>
+            <tr>
+              <th>Date</th><th>Title</th><th>Category</th>
+              <th class="num">Amount</th><th>Notes</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="expenses-tbody">
+            <tr class="placeholder"><td colspan="6">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <button type="button" id="page-prev">← Prev</button>
+        <span id="page-info">—</span>
+        <button type="button" id="page-next">Next →</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Vanilla HTML/CSS/JS. See <code>app.js</code> for the fetch calls, and <code>contract/openapi.yaml</code> at the repo root for the API contract.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
