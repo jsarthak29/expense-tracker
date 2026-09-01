@@ -59,3 +59,17 @@ def list_expenses(
 @router.post("/expenses", response_model=ExpenseOut, status_code=status.HTTP_201_CREATED)
 def create_expense(payload: ExpenseIn, db: Session = Depends(get_db)):
     return services.create_expense(db, payload)
+
+
+@router.delete(
+    "/expenses/{expense_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+)
+def delete_expense(expense_id: int, db: Session = Depends(get_db)) -> Response:
+    if not services.delete_expense(db, expense_id):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"Expense {expense_id} not found")
+    # Returning a bare Response keeps 204 genuinely body-less. Annotating this
+    # handler `-> None` instead makes FastAPI build a response model for it and
+    # refuse to start ("Status code 204 must not have a response body").
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
