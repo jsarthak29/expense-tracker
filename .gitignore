@@ -14,3 +14,7 @@ venv/
 
 # Local SQLite database
 *.db
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
