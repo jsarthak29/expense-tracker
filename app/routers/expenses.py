@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 from app import services
 from app.config import settings
 from app.database import get_db
-from app.repository import ExpenseFilters
 from app.schemas import ExpenseIn, ExpenseOut, SortField, SortOrder
 
 router = APIRouter(tags=["expenses"])
@@ -39,7 +38,7 @@ def list_expenses(
             status.HTTP_422_UNPROCESSABLE_ENTITY, "amount_min must not be greater than amount_max"
         )
 
-    filters = ExpenseFilters(
+    filters = services.build_filters(
         category=category,
         q=q,
         date_from=date_from,

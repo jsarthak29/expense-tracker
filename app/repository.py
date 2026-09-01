@@ -21,6 +21,13 @@ class ExpenseFilters:
     date_to: dt.date | None = None
     amount_min: Decimal | None = None
     amount_max: Decimal | None = None
+    # Explicitly ask for the uncategorised rows (see services.UNCATEGORISED).
+    uncategorised: bool = False
+
+
+def _category_bucket():
+    """NULL and "" are the same thing to a reader; collapse them to one value."""
+    return func.nullif(func.trim(func.coalesce(Expense.category, "")), "")
 
 
 def _escape_like(term: str) -> str:
@@ -29,7 +36,10 @@ def _escape_like(term: str) -> str:
 
 
 def _apply_filters(stmt: Select, filters: ExpenseFilters) -> Select:
-    if filters.category:
+    if filters.uncategorised:
+        stmt = stmt.where(_category_bucket().is_(None))
+    elif filters.category:
+        # An explicit category never matches the uncategorised rows.
         stmt = stmt.where(func.lower(Expense.category) == filters.category.lower())
 
     if filters.q:
@@ -101,10 +111,11 @@ def totals_by_category(
     db: Session, *, start: dt.date, end: dt.date
 ) -> list[tuple[str | None, Decimal]]:
     """Sum spend per category over [start, end). Aggregated in SQL, not Python."""
+    bucket = _category_bucket()
     stmt = (
-        select(Expense.category, func.sum(Expense.amount))
+        select(bucket, func.sum(Expense.amount))
         .where(Expense.date >= start, Expense.date < end)
-        .group_by(Expense.category)
+        .group_by(bucket)
         .order_by(func.sum(Expense.amount).desc())
     )
     return [(category, total) for category, total in db.execute(stmt).all()]

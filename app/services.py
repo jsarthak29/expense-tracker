@@ -12,6 +12,41 @@ from app.models import Expense
 from app.repository import ExpenseFilters
 from app.schemas import CategoryTotal, ExpenseIn, SortField, SortOrder, SummaryOut
 
+# Reserved value for `?category=` that selects the rows with no category.
+# The contract leaves no room for a dedicated flag, and a bare `category=`
+# is indistinguishable from an untouched form field.
+UNCATEGORISED = "__blank__"
+
+
+def normalise_category(value: str | None) -> str | None:
+    """"" and whitespace mean "no category", and NULL is how we store that."""
+    if value is None:
+        return None
+    return value.strip() or None
+
+
+def build_filters(
+    *,
+    category: str | None = None,
+    q: str | None = None,
+    date_from: dt.date | None = None,
+    date_to: dt.date | None = None,
+    amount_min: Decimal | None = None,
+    amount_max: Decimal | None = None,
+) -> ExpenseFilters:
+    """Apply category policy to raw query params before they hit the database."""
+    category = normalise_category(category)
+    uncategorised = category is not None and category.lower() == UNCATEGORISED
+    return ExpenseFilters(
+        category=None if uncategorised else category,
+        uncategorised=uncategorised,
+        q=q.strip() or None if q else None,
+        date_from=date_from,
+        date_to=date_to,
+        amount_min=amount_min,
+        amount_max=amount_max,
+    )
+
 
 def list_expenses(
     db: Session,
@@ -31,7 +66,7 @@ def create_expense(db: Session, payload: ExpenseIn) -> Expense:
     expense = Expense(
         title=payload.title,
         amount=payload.amount,
-        category=payload.category,
+        category=normalise_category(payload.category),
         date=payload.date,
         notes=payload.notes or None,
     )
