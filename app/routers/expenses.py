@@ -10,7 +10,7 @@ from app import services
 from app.config import settings
 from app.database import get_db
 from app.repository import ExpenseFilters
-from app.schemas import ExpenseOut, SortField, SortOrder
+from app.schemas import ExpenseIn, ExpenseOut, SortField, SortOrder
 
 router = APIRouter(tags=["expenses"])
 
@@ -54,3 +54,8 @@ def list_expenses(
     # The contract puts the total in a header; the body stays a plain array.
     response.headers["X-Total-Count"] = str(total)
     return items
+
+
+@router.post("/expenses", response_model=ExpenseOut, status_code=status.HTTP_201_CREATED)
+def create_expense(payload: ExpenseIn, db: Session = Depends(get_db)):
+    return services.create_expense(db, payload)
