@@ -10,12 +10,19 @@
 
 <header class="topbar">
   <div class="shell topbar__inner">
-    <div class="topbar__titles">
-      <h1>Expense Tracker</h1>
-      <p class="subtitle">Personal finance overview</p>
+    <div class="topbar__left">
+      <div class="brand">
+        <h1 class="brand__name">Expense Tracker</h1>
+        <span class="badge"><span class="badge__dot" aria-hidden="true"></span>Personal</span>
+      </div>
+      <p class="brand__sub">Personal finance overview</p>
     </div>
+
     <button type="button" id="open-add" class="btn btn--primary">
-      <span aria-hidden="true">+</span> Add Expense
+      <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+        <path d="M10 4.5v11M4.5 10h11" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+      </svg>
+      Add Expense
     </button>
   </div>
 </header>
@@ -23,95 +30,138 @@
 <main class="shell">
 
   <div id="error-banner" class="banner" role="alert" hidden>
+    <svg class="icon banner__icon" viewBox="0 0 20 20" aria-hidden="true">
+      <circle cx="10" cy="10" r="7.4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M10 6.4v4.4M10 13.4v.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
     <div class="banner__body">
       <strong class="banner__title">Something went wrong</strong>
       <span id="error-text" class="banner__detail"></span>
     </div>
+    <button type="button" id="error-retry" class="btn btn--sm">Try again</button>
     <button type="button" id="error-dismiss" class="banner__close" aria-label="Dismiss">&times;</button>
   </div>
 
-  <!-- Monthly summary -->
-  <section class="card">
-    <div class="card__head">
-      <h2 class="card__title">Monthly summary</h2>
-      <label class="field field--inline">
-        <span class="field__label">Month</span>
+  <!-- ── Monthly overview ────────────────────────────────────────────── -->
+  <section class="section">
+    <div class="section__head">
+      <h2 class="section__title">Monthly overview</h2>
+      <label class="month-picker">
+        <span class="sr-only">Month</span>
         <input type="month" id="summary-month" />
       </label>
     </div>
 
-    <div class="summary">
-      <div class="summary__headline">
-        <span class="summary__label">Total spend</span>
-        <span id="summary-total" class="summary__amount">&mdash;</span>
-        <span id="summary-meta" class="summary__meta"></span>
-      </div>
-      <div id="breakdown" class="breakdown"></div>
+    <div class="stats">
+      <article class="stat">
+        <span class="stat__label">Total spending</span>
+        <span class="stat__value" id="stat-total">&mdash;</span>
+        <span class="stat__meta" id="stat-total-meta">&nbsp;</span>
+      </article>
+
+      <article class="stat">
+        <span class="stat__label">Transactions</span>
+        <span class="stat__value" id="stat-count">&mdash;</span>
+        <span class="stat__meta" id="stat-count-meta">&nbsp;</span>
+      </article>
+
+      <article class="stat">
+        <span class="stat__label">Top category</span>
+        <span class="stat__value stat__value--text" id="stat-top">&mdash;</span>
+        <span class="stat__meta" id="stat-top-meta">&nbsp;</span>
+      </article>
     </div>
   </section>
 
-  <!-- Expenses -->
+  <!-- ── Category breakdown ──────────────────────────────────────────── -->
   <section class="card">
     <div class="card__head">
-      <h2 class="card__title">Expenses</h2>
-      <span id="result-count" class="card__meta"></span>
+      <h2 class="card__title">Spending by category</h2>
+      <span class="card__meta" id="breakdown-meta"></span>
+    </div>
+    <div id="breakdown" class="breakdown"></div>
+  </section>
+
+  <!-- ── Expenses ────────────────────────────────────────────────────── -->
+  <section class="card">
+    <div class="card__head">
+      <h2 class="card__title">Recent expenses</h2>
+      <span class="card__meta" id="result-count"></span>
     </div>
 
-    <form id="filter-form" class="filters">
-      <label class="field field--grow">
-        <span class="field__label">Search</span>
-        <input name="q" placeholder="Title or notes" autocomplete="off" />
-      </label>
-      <label class="field">
-        <span class="field__label">Category</span>
-        <select name="category">
-          <option value="">All categories</option>
-          <option value="Food">Food</option>
-          <option value="Transport">Transport</option>
-          <option value="Utilities">Utilities</option>
-          <option value="Entertainment">Entertainment</option>
-          <option value="Shopping">Shopping</option>
-          <option value="Health">Health</option>
-          <option value="Rent">Rent</option>
-          <option value="Travel">Travel</option>
-          <option value="__blank__">Uncategorized</option>
-        </select>
-      </label>
-      <label class="field">
-        <span class="field__label">Date from</span>
-        <input type="date" name="date_from" />
-      </label>
-      <label class="field">
-        <span class="field__label">Date to</span>
-        <input type="date" name="date_to" />
-      </label>
-      <label class="field">
-        <span class="field__label">Min &#8377;</span>
-        <input type="number" step="0.01" min="0" name="amount_min" placeholder="0" />
-      </label>
-      <label class="field">
-        <span class="field__label">Max &#8377;</span>
-        <input type="number" step="0.01" min="0" name="amount_max" placeholder="Any" />
-      </label>
-      <label class="field">
-        <span class="field__label">Sort by</span>
-        <select name="sort">
-          <option value="date">Date</option>
-          <option value="amount">Amount</option>
-          <option value="title">Description</option>
-          <option value="category">Category</option>
-        </select>
-      </label>
-      <label class="field">
-        <span class="field__label">Order</span>
-        <select name="order">
-          <option value="desc">Descending</option>
-          <option value="asc">Ascending</option>
-        </select>
-      </label>
-      <div class="filters__actions">
+    <form id="filter-form" class="toolbar">
+      <div class="toolbar__primary">
+        <div class="search">
+          <svg class="icon search__icon" viewBox="0 0 20 20" aria-hidden="true">
+            <circle cx="9" cy="9" r="5.4" fill="none" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M13.2 13.2 17 17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+          <input name="q" type="search" placeholder="Search expenses&hellip;" autocomplete="off"
+                 aria-label="Search expenses by title or notes" />
+        </div>
+
+        <button type="button" id="filter-toggle" class="btn" aria-expanded="false" aria-controls="filter-advanced">
+          <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M3.5 5.5h13M6 10h8M8.5 14.5h3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+          Filters
+          <span class="chip" id="filter-count" hidden>0</span>
+        </button>
+
         <button type="submit" class="btn btn--primary">Apply</button>
-        <button type="button" id="filter-reset" class="btn">Reset</button>
+      </div>
+
+      <div class="toolbar__advanced" id="filter-advanced" hidden>
+        <label class="field">
+          <span class="field__label">Category</span>
+          <select name="category">
+            <option value="">All categories</option>
+            <option value="Food">Food</option>
+            <option value="Transport">Transport</option>
+            <option value="Utilities">Utilities</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Shopping">Shopping</option>
+            <option value="Health">Health</option>
+            <option value="Rent">Rent</option>
+            <option value="Travel">Travel</option>
+            <option value="__blank__">Uncategorized</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="field__label">Date from</span>
+          <input type="date" name="date_from" />
+        </label>
+        <label class="field">
+          <span class="field__label">Date to</span>
+          <input type="date" name="date_to" />
+        </label>
+        <label class="field">
+          <span class="field__label">Min amount</span>
+          <input type="number" step="0.01" min="0" name="amount_min" placeholder="0" />
+        </label>
+        <label class="field">
+          <span class="field__label">Max amount</span>
+          <input type="number" step="0.01" min="0" name="amount_max" placeholder="Any" />
+        </label>
+        <label class="field">
+          <span class="field__label">Sort by</span>
+          <select name="sort">
+            <option value="date">Date</option>
+            <option value="amount">Amount</option>
+            <option value="title">Description</option>
+            <option value="category">Category</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="field__label">Order</span>
+          <select name="order">
+            <option value="desc">Descending</option>
+            <option value="asc">Ascending</option>
+          </select>
+        </label>
+        <div class="field field--action">
+          <button type="button" id="filter-reset" class="btn">Clear filters</button>
+        </div>
       </div>
     </form>
 
@@ -130,10 +180,20 @@
       </table>
     </div>
 
-    <div class="pagination">
-      <button type="button" id="page-prev" class="btn">&larr; Previous</button>
+    <div class="pagination" id="pagination">
+      <button type="button" id="page-prev" class="btn btn--sm">
+        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M12 4.5 6.5 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Previous
+      </button>
       <span id="page-info" class="pagination__info">&mdash;</span>
-      <button type="button" id="page-next" class="btn">Next &rarr;</button>
+      <button type="button" id="page-next" class="btn btn--sm">
+        Next
+        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+          <path d="m8 4.5 5.5 5.5L8 15.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
     </div>
   </section>
 
@@ -143,12 +203,15 @@
   <p>Vanilla HTML, CSS and JavaScript &mdash; no build step, no dependencies. API contract: <code>contract/openapi.yaml</code>.</p>
 </footer>
 
-<!-- Add expense modal -->
+<!-- ── Add expense modal ─────────────────────────────────────────────── -->
 <div id="add-modal" class="modal" hidden>
   <div class="modal__backdrop" data-close-modal></div>
   <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="add-modal-title">
     <div class="modal__head">
-      <h2 id="add-modal-title">Add expense</h2>
+      <div>
+        <h2 id="add-modal-title" class="modal__title">Add expense</h2>
+        <p class="modal__sub">Record a new transaction</p>
+      </div>
       <button type="button" class="modal__close" data-close-modal aria-label="Close">&times;</button>
     </div>
 
@@ -156,17 +219,20 @@
       <div id="add-error" class="form-error" hidden></div>
 
       <label class="field field--full">
-        <span class="field__label">Description <span class="req">*</span></span>
+        <span class="field__label">Description <span class="req" aria-hidden="true">*</span></span>
         <input name="title" required maxlength="255" autocomplete="off" placeholder="Lunch at Toit" />
       </label>
 
       <label class="field">
-        <span class="field__label">Amount (&#8377;) <span class="req">*</span></span>
-        <input name="amount" required type="number" step="0.01" min="0.01" placeholder="0.00" />
+        <span class="field__label">Amount <span class="req" aria-hidden="true">*</span></span>
+        <div class="input-prefix">
+          <span class="input-prefix__symbol" aria-hidden="true">&#8377;</span>
+          <input name="amount" required type="number" step="0.01" min="0.01" placeholder="0.00" />
+        </div>
       </label>
 
       <label class="field">
-        <span class="field__label">Date <span class="req">*</span></span>
+        <span class="field__label">Date <span class="req" aria-hidden="true">*</span></span>
         <input name="date" required type="date" />
       </label>
 
@@ -193,9 +259,31 @@
 
       <div class="modal__actions">
         <button type="button" class="btn" data-close-modal>Cancel</button>
-        <button type="submit" id="add-submit" class="btn btn--primary">Save expense</button>
+        <button type="submit" id="add-submit" class="btn btn--primary">Add expense</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ── Delete confirmation ───────────────────────────────────────────── -->
+<div id="confirm-modal" class="modal" hidden>
+  <div class="modal__backdrop" data-close-confirm></div>
+  <div class="modal__panel modal__panel--sm" role="alertdialog" aria-modal="true"
+       aria-labelledby="confirm-title" aria-describedby="confirm-text">
+    <div class="modal__body">
+      <div class="confirm__icon" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 20 20">
+          <path d="M10 6.6v4.2M10 13.3v.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+          <circle cx="10" cy="10" r="7.4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <h2 id="confirm-title" class="modal__title">Delete this expense?</h2>
+      <p id="confirm-text" class="modal__sub"></p>
+    </div>
+    <div class="modal__actions modal__actions--padded">
+      <button type="button" class="btn" data-close-confirm>Cancel</button>
+      <button type="button" id="confirm-delete" class="btn btn--danger">Delete</button>
+    </div>
   </div>
 </div>
 
