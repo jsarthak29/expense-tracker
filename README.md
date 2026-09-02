@@ -390,4 +390,7 @@ What has actually been run, rather than assumed:
 | Identity sequence after seeding | `POST` returns ids 301, 302 — no duplicate-key failure |
 | Database unavailable | exits with the readable message above, password redacted |
 | Frontend | driven in headless Chrome at 1440/1280/1024/768/390 px; no horizontal overflow at any width |
-| `docker compose up --build` | **not run** — Docker is not installed on the machine this was written on. The compose file parses, every path it copies exists, and the boot sequence it depends on was verified directly against Postgres. |
+| Container filesystem layout | replicated as the image would have it (`/srv` with only what the Dockerfile copies); the app boots from it, finds `expenses.csv` and `ui/`, seeds, and serves every route |
+| Container dependency set | all 32 pinned packages resolve for `linux/amd64` on Python 3.11 with wheels — no source build, so the slim image needs no compiler |
+| compose health check command | run verbatim against the app; returns `{"status": "ok"}` |
+| `docker compose up --build` | **not run** — Docker needs admin rights and WSL2, neither available on the machine this was written on. Everything the build and boot depend on was verified without it (rows above), but the image build and container networking themselves are unexercised. |

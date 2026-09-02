@@ -8,6 +8,10 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-expenses}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-expenses}
       POSTGRES_DB: ${POSTGRES_DB:-expenses}
+    ports:
+      # Published so the documented local flow (run the API outside compose
+      # against this database) works. Override if 5432 is already taken.
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:

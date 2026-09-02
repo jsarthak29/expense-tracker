@@ -1,16 +1,21 @@
+# Docker matches these against the full relative path, so nested directories
+# need the ** prefix — plain "__pycache__" would only match one at the root.
 .git
 .github
 .venv
 venv
-__pycache__
-*.pyc
+**/__pycache__
+**/*.pyc
 .pytest_cache
 .ruff_cache
+**/.DS_Store
 *.db
 .env
-.DS_Store
 .vscode
 .idea
+
+# Not needed at runtime; the image only serves the app.
 tests
+pytest.ini
 README.md
 TASK.md
