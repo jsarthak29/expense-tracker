@@ -73,6 +73,8 @@ scripts/seed.py      `python scripts/seed.py`
 tests/               conftest + 23 tests
 ui/                  the provided frontend (see Frontend)
 contract/            the OpenAPI contract — the source of truth
+api/index.py         Vercel serverless entry point
+vercel.json
 Dockerfile
 docker-compose.yml
 ```
@@ -201,6 +203,44 @@ To reload the sample data inside the running container:
 ```bash
 docker compose exec app python scripts/seed.py --reset
 ```
+
+---
+
+## Deploying to Vercel
+
+Docker Compose above is the primary way to run this. Vercel is supported as a
+hosted demo, with two constraints worth stating plainly:
+
+- **Vercel provides no database.** Its filesystem is read-only and `/tmp` does
+  not survive between invocations, so SQLite is not an option — the app needs a
+  hosted Postgres. Neon's free tier works well.
+- **Its Python runtime does not run ASGI lifespan events.** The schema creation
+  and seeding in `app.main.lifespan` therefore never happen on Vercel, so the
+  database must already have its schema before the first request.
+
+`api/index.py` exposes the same ASGI app, and `vercel.json` rewrites every path
+to it, so the UI and the API stay on one origin exactly as they do locally.
+
+**1. Create the database** at [neon.tech](https://neon.tech) and copy the
+*pooled* connection string (the host containing `-pooler`), which is the right
+one for serverless.
+
+**2. Create the schema and load the sample data from your machine**, once:
+
+```bash
+DATABASE_URL="postgresql+psycopg://<user>:<pw>@<host>/<db>?sslmode=require"   python scripts/seed.py
+```
+
+**3. Import the repository** at [vercel.com/new](https://vercel.com/new), then
+set these environment variables in the project settings:
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` | the pooled Neon URL, with the `postgresql+psycopg://` scheme |
+| `SEED_ON_STARTUP` | `false` |
+| `DB_CONNECT_ATTEMPTS` | `3` — a free Neon instance wakes in a second or two, and the default of 15 would outlast the function timeout |
+
+Vercel builds from `requirements.txt` and deploys on every push to `main`.
 
 ---
 
