@@ -380,7 +380,7 @@ async function loadOverview() {
   kpi.topMeta.textContent = top ? money(top.total) : "";
 
   renderTrend(monthRows.rows, summary.month);
-  renderCategories(cats, summary, catsMeta, monthLabel, 6);
+  renderCategories(cats, summary, catsMeta, monthLabel, 5);
   renderRecent();
 }
 
@@ -419,7 +419,7 @@ function renderTrend(rows, month) {
     return;
   }
 
-  const W = 640, H = 190, padL = 46, padR = 10, padT = 12, padB = 26;
+  const W = 640, H = 250, padL = 46, padR = 10, padT = 12, padB = 28;
   const innerW = W - padL - padR;
   const innerH = H - padT - padB;
 
@@ -478,7 +478,11 @@ function renderCategories(target, summary, metaEl, monthLabel, limit = Infinity)
   }
 
   const n = summary.by_category.length;
-  if (metaEl) metaEl.textContent = `${n} categor${n === 1 ? "y" : "ies"}`;
+  if (metaEl) {
+    metaEl.textContent = list.length < n
+      ? `Top ${list.length} of ${n}`
+      : `${n} categor${n === 1 ? "y" : "ies"}`;
+  }
 
   const max = Math.max(...list.map((c) => c.total));
 
@@ -565,7 +569,7 @@ function renderMonthBars(series, activeMonth) {
     return;
   }
 
-  const W = 640, H = 190, padL = 46, padR = 10, padT = 12, padB = 26;
+  const W = 1120, H = 300, padL = 56, padR = 12, padT = 14, padB = 30;
   const innerW = W - padL - padR;
   const innerH = H - padT - padB;
 
