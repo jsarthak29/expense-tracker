@@ -251,6 +251,7 @@ body {
 }
 
 .link:hover { color: var(--accent-hover); }
+.link--foot { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--hairline); width: 100%; }
 
 .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .field__label { font-size: 12px; font-weight: 550; color: var(--fg-soft); }
@@ -372,9 +373,48 @@ select {
 
 /* ── Charts ────────────────────────────────────────────────────────── */
 
+.chart-wrap { position: relative; }
 .chart { width: 100%; }
 .chart--months { padding-top: 2px; }
 .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+/* Hover readout for the daily trend */
+.chart-tip {
+  position: absolute;
+  z-index: 5;
+  transform: translate(-50%, -100%);
+  margin-top: -12px;
+  pointer-events: none;
+  background: #101828;
+  color: #fff;
+  border-radius: var(--r-sm);
+  padding: 7px 10px;
+  box-shadow: var(--shadow-md);
+  white-space: nowrap;
+  line-height: 1.35;
+}
+
+.chart-tip::after {
+  content: "";
+  position: absolute;
+  left: 50%; top: 100%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #101828;
+}
+
+.chart-tip__date { display: block; font-size: 11px; color: #b6bdcc; }
+.chart-tip__value { display: block; font-size: 13px; font-weight: 620; font-variant-numeric: tabular-nums; }
+
+.trend-guide { stroke: var(--border-strong); stroke-width: 1; stroke-dasharray: 3 3; }
+.trend-hover { fill: var(--accent); stroke: var(--surface); stroke-width: 2.5; }
+.trend-hit { fill: transparent; cursor: crosshair; }
+
+/* One short draw-in on load; prefers-reduced-motion kills it. */
+.trend-line { animation: draw .55s var(--ease); }
+.trend-area { animation: fade .5s var(--ease) .1s backwards; }
+
+@keyframes draw { from { stroke-dashoffset: var(--len); } }
 
 .axis-label { font-size: 10px; fill: var(--faint); font-weight: 560; }
 .grid-line { stroke: var(--hairline); stroke-width: 1; }
@@ -457,7 +497,23 @@ select {
 
 .search { position: relative; flex: 1; min-width: 180px; }
 .search__icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--faint); pointer-events: none; }
-.search input { padding-left: 34px; }
+.search input { padding-left: 34px; padding-right: 58px; }
+.search input:focus + .kbd, .search input:not(:placeholder-shown) + .kbd { opacity: 0; }
+
+.kbd {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  pointer-events: none;
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: #fbfbfc;
+  color: var(--faint);
+  font: 500 10.5px/1 system-ui, sans-serif;
+  letter-spacing: .04em;
+  padding: 4px 5px;
+  transition: opacity .16s var(--ease);
+}
+
 
 .popover-wrap { position: relative; }
 
@@ -710,6 +766,10 @@ tr:hover .icon-btn { opacity: 1; }
   .panel { padding: 15px; }
 
   .toolbar > .btn, .popover-wrap { flex: 1; }
+  /* No hardware keyboard to speak of — reclaim the space for the field. */
+  .kbd { display: none; }
+  .search { flex-basis: 100%; }
+  .search input { padding-right: 11px; }
   .popover-wrap .btn { width: 100%; }
   .popover { right: auto; left: 0; }
   .popover__grid { grid-template-columns: 1fr; }

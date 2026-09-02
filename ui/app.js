@@ -52,6 +52,9 @@ const kpi = {
 const trend = $("trend");
 const trendSub = $("trend-sub");
 const trendPeak = $("trend-peak");
+const trendTip = $("trend-tip");
+const trendTipDate = $("trend-tip-date");
+const trendTipValue = $("trend-tip-value");
 const cats = $("cats");
 const catsMeta = $("cats-meta");
 const catsDetail = $("cats-detail");
@@ -124,6 +127,9 @@ const daysInMonth = (ym) => {
   const [y, m] = ym.split("-").map(Number);
   return new Date(y, m, 0).getDate();
 };
+
+/** "2026-07", 8 -> "2026-07-09" (zero-based day index). */
+const dayISO = (ym, i) => `${ym}-${String(i + 1).padStart(2, "0")}`;
 
 /** "2026-07" -> { from: "2026-07-01", to: "2026-07-31" } */
 function monthRange(ym) {
@@ -411,6 +417,7 @@ function renderTrend(rows, month) {
   if (peak <= 0) {
     trendSub.textContent = fmtMonth(month);
     trendPeak.textContent = "";
+    trendTip.hidden = true;
     trend.innerHTML = `
       <div class="state">
         <div class="state-title">Nothing recorded in ${escapeHtml(fmtMonth(month))}</div>
@@ -434,6 +441,12 @@ function renderTrend(rows, month) {
   const line = points.map(([px, py], i) => `${i ? "L" : "M"}${px.toFixed(1)},${py.toFixed(1)}`).join(" ");
   const area = `${line} L${x(days - 1).toFixed(1)},${(padT + innerH).toFixed(1)} L${x(0).toFixed(1)},${(padT + innerH).toFixed(1)} Z`;
 
+  // Path length for the draw-in animation, measured off the points we already have.
+  let len = 0;
+  for (let i = 1; i < points.length; i++) {
+    len += Math.hypot(points[i][0] - points[i - 1][0], points[i][1] - points[i - 1][1]);
+  }
+
   const ticks = [0, 0.5, 1].map((f) => {
     const value = ceiling * f;
     const py = y(value);
@@ -450,10 +463,10 @@ function renderTrend(rows, month) {
   const peakIndex = totals.indexOf(peak);
 
   trendSub.textContent = `Daily spend across ${fmtMonth(month)}`;
-  trendPeak.textContent = `Peak ${money(peak)} on ${fmtDate(`${month}-${String(peakIndex + 1).padStart(2, "0")}`)}`;
+  trendPeak.textContent = `Peak ${money(peak)} on ${fmtDate(dayISO(month, peakIndex))}`;
 
   trend.innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Daily spending for ${escapeHtml(fmtMonth(month))}">
+    <svg viewBox="0 0 ${W} ${H}" aria-label="Daily spending for ${escapeHtml(fmtMonth(month))}">
       <defs>
         <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.18"/>
@@ -461,11 +474,62 @@ function renderTrend(rows, month) {
         </linearGradient>
       </defs>
       ${ticks}
-      <path d="${area}" fill="url(#trendFill)"/>
-      <path class="trend-line" d="${line}"/>
+      <path class="trend-area" d="${area}" fill="url(#trendFill)"/>
+      <path class="trend-line" style="--len:${len.toFixed(0)}px" d="${line}"/>
+      <line class="trend-guide" x1="0" y1="${padT}" x2="0" y2="${padT + innerH}" opacity="0"/>
       <circle class="trend-dot" cx="${x(peakIndex).toFixed(1)}" cy="${y(peak).toFixed(1)}" r="3.5"/>
+      <circle class="trend-hover" cx="0" cy="0" r="4.5" opacity="0"/>
+      <rect class="trend-hit" x="${padL}" y="${padT}" width="${innerW}" height="${innerH}"/>
       ${weeks.join("")}
     </svg>`;
+
+  attachTrendHover({ totals, days, month, W, padL, innerW, x, y });
+}
+
+/** Nearest-day hover readout: exact date, exact amount, highlighted point. */
+function attachTrendHover(g) {
+  const svg = trend.querySelector("svg");
+  const guide = svg.querySelector(".trend-guide");
+  const dot = svg.querySelector(".trend-hover");
+
+  const move = (event) => {
+    const rect = svg.getBoundingClientRect();
+    const scale = rect.width / g.W;
+    const vx = (event.clientX - rect.left) / scale;
+
+    const ratio = g.days === 1 ? 0 : (vx - g.padL) / g.innerW;
+    const i = Math.min(g.days - 1, Math.max(0, Math.round(ratio * (g.days - 1))));
+    const value = g.totals[i];
+
+    const cx = g.x(i);
+    const cy = g.y(value);
+
+    guide.setAttribute("x1", cx.toFixed(1));
+    guide.setAttribute("x2", cx.toFixed(1));
+    guide.setAttribute("opacity", "1");
+    dot.setAttribute("cx", cx.toFixed(1));
+    dot.setAttribute("cy", cy.toFixed(1));
+    dot.setAttribute("opacity", "1");
+
+    trendTipDate.textContent = fmtDate(dayISO(g.month, i));
+    trendTipValue.textContent = value > 0 ? money(value) : "No spending";
+
+    trendTip.hidden = false;
+    // Keep the bubble inside the card on the first and last days.
+    const half = trendTip.offsetWidth / 2;
+    const left = Math.min(Math.max(cx * scale, half), rect.width - half);
+    trendTip.style.left = `${left}px`;
+    trendTip.style.top = `${cy * scale}px`;
+  };
+
+  const leave = () => {
+    trendTip.hidden = true;
+    guide.setAttribute("opacity", "0");
+    dot.setAttribute("opacity", "0");
+  };
+
+  svg.addEventListener("pointermove", move);
+  svg.addEventListener("pointerleave", leave);
 }
 
 function renderCategories(target, summary, metaEl, monthLabel, limit = Infinity) {
@@ -847,11 +911,31 @@ for (const el of addModal.querySelectorAll("[data-close-modal]")) {
 }
 
 document.addEventListener("keydown", (event) => {
+  // Ctrl/Cmd+K jumps to the expense search from anywhere.
+  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+    event.preventDefault();
+    focusSearch();
+    return;
+  }
+
   if (event.key !== "Escape") return;
   if (!confirmModal.hidden) closeConfirm(false);
   else if (!addModal.hidden) closeAddModal();
   else if (!filterPanel.hidden) setFilterPanel(false);
 });
+
+function focusSearch() {
+  const field = filterForm.elements.q;
+  const focus = () => { field.focus(); field.select(); };
+  if (currentView === "expenses") return focus();
+  location.hash = "#/expenses";     // setView runs on hashchange
+  setTimeout(focus, 80);
+}
+
+// Label the hint for the platform the visitor is actually on.
+if (/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)) {
+  $("search-hint").textContent = "⌘ K";
+}
 
 addForm.addEventListener("submit", async (event) => {
   event.preventDefault();

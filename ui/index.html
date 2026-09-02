@@ -144,7 +144,13 @@
               </div>
               <span class="legend" id="trend-peak"></span>
             </div>
-            <div class="chart" id="trend"></div>
+            <div class="chart-wrap">
+              <div class="chart" id="trend"></div>
+              <div class="chart-tip" id="trend-tip" role="status" hidden>
+                <span class="chart-tip__date" id="trend-tip-date"></span>
+                <span class="chart-tip__value" id="trend-tip-value"></span>
+              </div>
+            </div>
           </section>
 
           <section class="panel">
@@ -153,6 +159,11 @@
               <span class="panel__meta" id="cats-meta"></span>
             </div>
             <div class="catlist" id="cats"></div>
+            <a class="link link--foot" href="#/analytics" id="cats-all">View all categories
+              <svg class="icon icon--xs" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="m8 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
           </section>
         </div>
 
@@ -186,6 +197,7 @@
               </svg>
               <input name="q" type="search" placeholder="Search expenses&hellip;" autocomplete="off"
                      aria-label="Search expenses by title or notes" />
+              <kbd class="kbd" id="search-hint" aria-hidden="true">Ctrl K</kbd>
             </div>
 
             <div class="popover-wrap">
