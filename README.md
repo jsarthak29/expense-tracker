@@ -237,8 +237,18 @@ abort the load with the offending line number rather than being silently skipped
 pytest
 ```
 
-23 tests against a throwaway SQLite file — nothing needs to be running. Deliberately
-weighted towards what a rewrite could quietly break:
+23 tests against a throwaway SQLite file — nothing needs to be running.
+
+The same suite also runs against Postgres, which is what the service actually deploys
+on. Point `TEST_DATABASE_URL` at a scratch database:
+
+```bash
+docker compose up -d db --wait
+createdb -h localhost -U expenses expenses_test          # once
+TEST_DATABASE_URL=postgresql+psycopg://expenses:expenses@localhost:5432/expenses_test pytest
+```
+
+Tests are deliberately weighted towards what a rewrite could quietly break:
 
 - `X-Total-Count` reports the pre-pagination total
 - paging over rows that tie on the sort column loses none of them
@@ -364,3 +374,20 @@ internal representation of "missing" — `NULL` — and exactly **one** wire rep
    faster than I would.
 8. **Structured JSON logging and request ids**, and a CI job running `pytest` plus
    `ruff` on the pinned versions so the setup above stays true on someone else's machine.
+
+---
+
+## Verification Status
+
+What has actually been run, rather than assumed:
+
+| | |
+|---|---|
+| Test suite on SQLite | 23 passed |
+| Test suite on **PostgreSQL 16.2** | 23 passed (same suite via `TEST_DATABASE_URL`) |
+| Cold boot on an empty Postgres | schema created, 300 rows seeded, second boot skipped seeding |
+| Every endpoint and filter on Postgres | totals, `X-Total-Count`, status codes and the blank-category bucket all as documented |
+| Identity sequence after seeding | `POST` returns ids 301, 302 — no duplicate-key failure |
+| Database unavailable | exits with the readable message above, password redacted |
+| Frontend | driven in headless Chrome at 1440/1280/1024/768/390 px; no horizontal overflow at any width |
+| `docker compose up --build` | **not run** — Docker is not installed on the machine this was written on. The compose file parses, every path it copies exists, and the boot sequence it depends on was verified directly against Postgres. |

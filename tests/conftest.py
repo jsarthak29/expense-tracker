@@ -1,9 +1,11 @@
 """Test wiring.
 
-Tests run against a throwaway SQLite file rather than the compose Postgres, so
-`pytest` needs nothing running. It has to be a file and not `sqlite://`: an
-in-memory database is per-connection, and TestClient dispatches sync endpoints
-across a threadpool, so the tables would vanish between request and handler.
+Tests run against a throwaway SQLite file by default, so `pytest` needs nothing
+running. It has to be a file and not `sqlite://`: an in-memory database is
+per-connection, and TestClient dispatches sync endpoints across a threadpool, so
+the tables would vanish between request and handler.
+
+Set TEST_DATABASE_URL to run the identical suite against Postgres.
 """
 
 from __future__ import annotations
@@ -17,7 +19,13 @@ from pathlib import Path
 import pytest
 
 _TMP_DB = Path(tempfile.mkdtemp(prefix="expenses-tests-")) / "test.db"
-os.environ["DATABASE_URL"] = f"sqlite:///{_TMP_DB.as_posix()}"
+
+# SQLite by default so `pytest` needs nothing running. Point TEST_DATABASE_URL at a
+# throwaway Postgres to run the same suite against the database we actually deploy on:
+#   TEST_DATABASE_URL=postgresql+psycopg://user:pw@localhost:5432/expenses_test pytest
+os.environ["DATABASE_URL"] = os.environ.get(
+    "TEST_DATABASE_URL", f"sqlite:///{_TMP_DB.as_posix()}"
+)
 
 from fastapi.testclient import TestClient  # noqa: E402
 

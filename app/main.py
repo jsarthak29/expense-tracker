@@ -12,6 +12,13 @@ from app.database import Base, SessionLocal, engine, wait_for_db
 from app.routers import expenses, health, summary
 from app.seed import seed
 
+# uvicorn only configures its own loggers, so without this the application's own
+# INFO lines (waiting for the database, seeding) never reach `docker compose logs`.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)-8s %(name)s: %(message)s",
+)
+
 logger = logging.getLogger("app")
 
 
