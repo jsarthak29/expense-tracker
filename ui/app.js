@@ -725,7 +725,7 @@ async function loadExpenses() {
     tbody.innerHTML = rows.map(renderRow).join("");
     for (const btn of tbody.querySelectorAll(".icon-btn")) {
       btn.addEventListener("click", () =>
-        deleteExpense(Number(btn.dataset.id), btn.dataset.title, btn.dataset.amount));
+        deleteExpense(Number(btn.dataset.id), btn.dataset.title, btn.dataset.amount, btn));
     }
   }
 
@@ -796,17 +796,26 @@ for (const el of confirmModal.querySelectorAll("[data-close-confirm]")) {
 
 $("confirm-delete").addEventListener("click", () => closeConfirm(true));
 
-async function deleteExpense(id, title, amount) {
+async function deleteExpense(id, title, amount, button) {
   if (!(await askConfirm(title, amount))) return;
+
+  const confirmBtn = $("confirm-delete");
+  if (button) button.disabled = true;
+  confirmBtn.disabled = true;
+
   try {
     await api(`/expenses/${id}`, { method: "DELETE" });
   } catch (err) {
     showError(err.friendly || "We couldn't delete that expense.");
-    toast("Could not delete the expense", "error");
+    toast("Unable to delete the expense", "error");
+    if (button) button.disabled = false;
     return;
+  } finally {
+    confirmBtn.disabled = false;
   }
+
   clearError();
-  toast("Expense deleted");
+  toast("Expense deleted successfully");
   await render();
 }
 
@@ -851,7 +860,9 @@ function applyFilters() {
   syncSortButton();
   currentPage = 1;
   clearError();
-  loadExpenses();
+  loadExpenses().then(() => {
+    if (active) toast(`Filters applied · ${active} active`);
+  });
 }
 
 $("filter-reset").addEventListener("click", () => {
@@ -970,7 +981,7 @@ addForm.addEventListener("submit", async (event) => {
 
   closeAddModal();
   clearError();
-  toast("Expense added");
+  toast("Expense added successfully");
   currentPage = 1;
   await render();
 });

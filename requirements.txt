@@ -7,4 +7,5 @@ pydantic-settings==2.15.0
 
 # dev / test
 pytest==9.1.1
-httpx==0.28.1
+# starlette's TestClient wants httpx2; plain httpx is deprecated there.
+httpx2==2.12.0

@@ -18,3 +18,10 @@ venv/
 # Tooling caches
 .pytest_cache/
 .ruff_cache/
+
+# Node (not used here, but keeps stray installs out)
+node_modules/
+
+# Database dumps
+*.sql.gz
+*.dump

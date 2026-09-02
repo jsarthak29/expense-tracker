@@ -31,11 +31,11 @@ def list_expenses(
 ):
     if date_from and date_to and date_from > date_to:
         raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_ENTITY, "date_from must not be after date_to"
+            status.HTTP_422_UNPROCESSABLE_CONTENT, "date_from must not be after date_to"
         )
     if amount_min is not None and amount_max is not None and amount_min > amount_max:
         raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_ENTITY, "amount_min must not be greater than amount_max"
+            status.HTTP_422_UNPROCESSABLE_CONTENT, "amount_min must not be greater than amount_max"
         )
 
     filters = services.build_filters(

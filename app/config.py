@@ -15,5 +15,16 @@ class Settings(BaseSettings):
     # Guard rail on `page_size` so a client cannot ask for the whole table in one hop.
     max_page_size: int = 200
 
+    # How long to wait for the database at startup. Containers start in any
+    # order, so the app has to tolerate Postgres not being up yet.
+    db_connect_attempts: int = 15
+    db_connect_delay_seconds: float = 1.0
+
+    # Load expenses.csv on boot when the table is empty. Off by default: a web
+    # process should not mutate data every time it starts, and under more than
+    # one worker they would race. docker-compose turns it on so a reviewer gets
+    # a populated dashboard from a single `up`.
+    seed_on_startup: bool = False
+
 
 settings = Settings()

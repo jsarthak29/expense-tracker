@@ -1,19 +1,39 @@
+# Minimal two-service setup: the API (which also serves the UI) and Postgres.
+# `docker compose up --build` is all a reviewer needs.
+
 services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: expenses
-      POSTGRES_PASSWORD: expenses
-      POSTGRES_DB: expenses
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER:-expenses}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-expenses}
+      POSTGRES_DB: ${POSTGRES_DB:-expenses}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U expenses -d expenses"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-expenses} -d ${POSTGRES_DB:-expenses}"]
       interval: 3s
       timeout: 3s
-      retries: 10
+      retries: 20
+
+  app:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-expenses}:${POSTGRES_PASSWORD:-expenses}@db:5432/${POSTGRES_DB:-expenses}
+      # Load expenses.csv on first boot so the dashboard has data to show.
+      # Off by default outside compose - see the README for why.
+      SEED_ON_STARTUP: "true"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health').read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
 volumes:
   pgdata:
