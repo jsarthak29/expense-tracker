@@ -110,8 +110,13 @@ def test_delete_returns_an_empty_204_then_404(client, seeded):
 
 
 def test_the_ui_mount_does_not_shadow_the_api(client, seeded):
+    """The catch-all at "/" must serve the UI without swallowing the API."""
     home = client.get("/")
 
     assert home.status_code == 200
-    assert "<title>Expenses</title>" in home.text
+    # Assert it is the UI document, not its wording — the markup is free to change.
+    assert home.headers["content-type"].startswith("text/html")
+    assert "<html" in home.text.lower()
+
     assert client.get("/expenses").status_code == 200
+    assert client.get("/summary?month=2026-06").status_code == 200
