@@ -8,209 +8,324 @@
 </head>
 <body>
 
-<header class="topbar">
-  <div class="shell topbar__inner">
-    <div class="topbar__left">
-      <div class="brand">
-        <h1 class="brand__name">Expense Tracker</h1>
-        <span class="badge"><span class="badge__dot" aria-hidden="true"></span>Personal</span>
-      </div>
-      <p class="brand__sub">Personal finance overview</p>
-    </div>
+<div class="layout">
 
-    <button type="button" id="open-add" class="btn btn--primary">
-      <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
-        <path d="M10 4.5v11M4.5 10h11" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
-      </svg>
-      Add Expense
-    </button>
-  </div>
-</header>
-
-<main class="shell">
-
-  <div id="error-banner" class="banner" role="alert" hidden>
-    <svg class="icon banner__icon" viewBox="0 0 20 20" aria-hidden="true">
-      <circle cx="10" cy="10" r="7.4" fill="none" stroke="currentColor" stroke-width="1.6"/>
-      <path d="M10 6.4v4.4M10 13.4v.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-    </svg>
-    <div class="banner__body">
-      <strong class="banner__title">Something went wrong</strong>
-      <span id="error-text" class="banner__detail"></span>
-    </div>
-    <button type="button" id="error-retry" class="btn btn--sm">Try again</button>
-    <button type="button" id="error-dismiss" class="banner__close" aria-label="Dismiss">&times;</button>
-  </div>
-
-  <!-- ── Monthly overview ────────────────────────────────────────────── -->
-  <section class="section">
-    <div class="section__head">
-      <h2 class="section__title">Monthly overview</h2>
-      <label class="month-picker">
-        <span class="sr-only">Month</span>
-        <input type="month" id="summary-month" />
-      </label>
-    </div>
-
-    <div class="stats">
-      <article class="stat">
-        <span class="stat__label">Total spending</span>
-        <span class="stat__value" id="stat-total">&mdash;</span>
-        <span class="stat__meta" id="stat-total-meta">&nbsp;</span>
-      </article>
-
-      <article class="stat">
-        <span class="stat__label">Transactions</span>
-        <span class="stat__value" id="stat-count">&mdash;</span>
-        <span class="stat__meta" id="stat-count-meta">&nbsp;</span>
-      </article>
-
-      <article class="stat">
-        <span class="stat__label">Top category</span>
-        <span class="stat__value stat__value--text" id="stat-top">&mdash;</span>
-        <span class="stat__meta" id="stat-top-meta">&nbsp;</span>
-      </article>
-    </div>
-  </section>
-
-  <!-- ── Category breakdown ──────────────────────────────────────────── -->
-  <section class="card">
-    <div class="card__head">
-      <h2 class="card__title">Spending by category</h2>
-      <span class="card__meta" id="breakdown-meta"></span>
-    </div>
-    <div id="breakdown" class="breakdown"></div>
-  </section>
-
-  <!-- ── Expenses ────────────────────────────────────────────────────── -->
-  <section class="card">
-    <div class="card__head">
-      <h2 class="card__title">Recent expenses</h2>
-      <span class="card__meta" id="result-count"></span>
-    </div>
-
-    <form id="filter-form" class="toolbar">
-      <div class="toolbar__primary">
-        <div class="search">
-          <svg class="icon search__icon" viewBox="0 0 20 20" aria-hidden="true">
-            <circle cx="9" cy="9" r="5.4" fill="none" stroke="currentColor" stroke-width="1.7"/>
-            <path d="M13.2 13.2 17 17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-          </svg>
-          <input name="q" type="search" placeholder="Search expenses&hellip;" autocomplete="off"
-                 aria-label="Search expenses by title or notes" />
-        </div>
-
-        <button type="button" id="filter-toggle" class="btn" aria-expanded="false" aria-controls="filter-advanced">
-          <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
-            <path d="M3.5 5.5h13M6 10h8M8.5 14.5h3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-          </svg>
-          Filters
-          <span class="chip" id="filter-count" hidden>0</span>
-        </button>
-
-        <button type="submit" class="btn btn--primary">Apply</button>
-      </div>
-
-      <div class="toolbar__advanced" id="filter-advanced" hidden>
-        <label class="field">
-          <span class="field__label">Category</span>
-          <select name="category">
-            <option value="">All categories</option>
-            <option value="Food">Food</option>
-            <option value="Transport">Transport</option>
-            <option value="Utilities">Utilities</option>
-            <option value="Entertainment">Entertainment</option>
-            <option value="Shopping">Shopping</option>
-            <option value="Health">Health</option>
-            <option value="Rent">Rent</option>
-            <option value="Travel">Travel</option>
-            <option value="__blank__">Uncategorized</option>
-          </select>
-        </label>
-        <label class="field">
-          <span class="field__label">Date from</span>
-          <input type="date" name="date_from" />
-        </label>
-        <label class="field">
-          <span class="field__label">Date to</span>
-          <input type="date" name="date_to" />
-        </label>
-        <label class="field">
-          <span class="field__label">Min amount</span>
-          <input type="number" step="0.01" min="0" name="amount_min" placeholder="0" />
-        </label>
-        <label class="field">
-          <span class="field__label">Max amount</span>
-          <input type="number" step="0.01" min="0" name="amount_max" placeholder="Any" />
-        </label>
-        <label class="field">
-          <span class="field__label">Sort by</span>
-          <select name="sort">
-            <option value="date">Date</option>
-            <option value="amount">Amount</option>
-            <option value="title">Description</option>
-            <option value="category">Category</option>
-          </select>
-        </label>
-        <label class="field">
-          <span class="field__label">Order</span>
-          <select name="order">
-            <option value="desc">Descending</option>
-            <option value="asc">Ascending</option>
-          </select>
-        </label>
-        <div class="field field--action">
-          <button type="button" id="filter-reset" class="btn">Clear filters</button>
-        </div>
-      </div>
-    </form>
-
-    <div class="table-wrap">
-      <table class="table">
-        <thead>
-          <tr>
-            <th scope="col">Date</th>
-            <th scope="col">Description</th>
-            <th scope="col">Category</th>
-            <th scope="col" class="num">Amount</th>
-            <th scope="col" class="actions-col"><span class="sr-only">Action</span></th>
-          </tr>
-        </thead>
-        <tbody id="expenses-tbody"></tbody>
-      </table>
-    </div>
-
-    <div class="pagination" id="pagination">
-      <button type="button" id="page-prev" class="btn btn--sm">
-        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
-          <path d="M12 4.5 6.5 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- ── Sidebar ───────────────────────────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar__brand">
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z"
+                fill="none" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M4 10h16M15 14.5h2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
         </svg>
-        Previous
-      </button>
-      <span id="page-info" class="pagination__info">&mdash;</span>
-      <button type="button" id="page-next" class="btn btn--sm">
-        Next
+      </span>
+      <span class="sidebar__wordmark">Expense<br />Tracker</span>
+    </div>
+
+    <nav class="nav" aria-label="Sections">
+      <a class="nav__item is-active" href="#/overview" data-view="overview">
         <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
-          <path d="m8 4.5 5.5 5.5L8 15.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M3.5 8.2 10 3.2l6.5 5v7.3a1.3 1.3 0 0 1-1.3 1.3H4.8a1.3 1.3 0 0 1-1.3-1.3z"
+                fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M8 16.8v-4.5h4v4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+        Overview
+      </a>
+      <a class="nav__item" href="#/expenses" data-view="expenses">
+        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M4.5 3.8h11v12.4l-2.2-1.4-2.15 1.4L9 14.8l-2.15 1.4L4.5 14.8z"
+                fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M7.5 7.3h5M7.5 10.3h5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Expenses
+      </a>
+      <a class="nav__item" href="#/analytics" data-view="analytics">
+        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M3.6 16.4h12.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M6 13.5V9M10 13.5V5.2M14 13.5v-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        </svg>
+        Analytics
+      </a>
+    </nav>
+
+    <div class="sidebar__foot">
+      <span class="workspace">
+        <span class="workspace__dot" aria-hidden="true"></span>
+        <span>
+          <strong>Personal</strong>
+          <small>Expense workspace</small>
+        </span>
+      </span>
+    </div>
+  </aside>
+
+  <div class="sidebar__scrim" id="sidebar-scrim" hidden></div>
+
+  <!-- ── Main column ───────────────────────────────────────────────── -->
+  <div class="main">
+
+    <div class="mobilebar">
+      <button type="button" class="icon-btn icon-btn--plain" id="nav-toggle" aria-label="Open navigation">
+        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M3.5 6h13M3.5 10h13M3.5 14h13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
         </svg>
       </button>
+      <span class="mobilebar__title">Expense Tracker</span>
     </div>
-  </section>
 
-</main>
+    <div class="content">
 
-<footer class="shell footer">
-  <p>Vanilla HTML, CSS and JavaScript &mdash; no build step, no dependencies. API contract: <code>contract/openapi.yaml</code>.</p>
-</footer>
+      <div id="error-banner" class="banner" role="alert" hidden>
+        <svg class="icon banner__icon" viewBox="0 0 20 20" aria-hidden="true">
+          <circle cx="10" cy="10" r="7.4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M10 6.4v4.4M10 13.4v.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <div class="banner__body">
+          <strong class="banner__title">Something went wrong</strong>
+          <span id="error-text" class="banner__detail"></span>
+        </div>
+        <button type="button" id="error-retry" class="btn btn--sm">Try again</button>
+        <button type="button" id="error-dismiss" class="banner__close" aria-label="Dismiss">&times;</button>
+      </div>
 
-<!-- ── Add expense modal ─────────────────────────────────────────────── -->
+      <header class="pagehead">
+        <div class="pagehead__text">
+          <span class="eyebrow" id="page-eyebrow">Dashboard</span>
+          <h1 class="pagehead__title" id="page-title">Overview</h1>
+          <p class="pagehead__sub" id="page-sub"></p>
+        </div>
+        <div class="pagehead__tools">
+          <label class="month-picker" id="month-wrap">
+            <span class="sr-only">Month</span>
+            <input type="month" id="summary-month" />
+          </label>
+          <button type="button" id="open-add" class="btn btn--primary">
+            <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M10 4.6v10.8M4.6 10h10.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+            </svg>
+            Add Expense
+          </button>
+        </div>
+      </header>
+
+      <!-- ── Overview ────────────────────────────────────────────── -->
+      <section class="view" id="view-overview">
+
+        <div class="kpis">
+          <article class="kpi">
+            <span class="kpi__label">Total spending</span>
+            <span class="kpi__value" id="kpi-total">&mdash;</span>
+            <span class="kpi__foot"><span id="kpi-total-meta" class="kpi__meta"></span><span id="kpi-delta"></span></span>
+          </article>
+          <article class="kpi">
+            <span class="kpi__label">Transactions</span>
+            <span class="kpi__value" id="kpi-count">&mdash;</span>
+            <span class="kpi__foot"><span class="kpi__meta" id="kpi-count-meta"></span></span>
+          </article>
+          <article class="kpi">
+            <span class="kpi__label">Average expense</span>
+            <span class="kpi__value" id="kpi-avg">&mdash;</span>
+            <span class="kpi__foot"><span class="kpi__meta">Per transaction</span></span>
+          </article>
+          <article class="kpi">
+            <span class="kpi__label">Top category</span>
+            <span class="kpi__value kpi__value--text" id="kpi-top">&mdash;</span>
+            <span class="kpi__foot"><span class="kpi__meta" id="kpi-top-meta"></span></span>
+          </article>
+        </div>
+
+        <div class="grid-2">
+          <section class="panel">
+            <div class="panel__head">
+              <div>
+                <h2 class="panel__title">Spending overview</h2>
+                <p class="panel__sub" id="trend-sub"></p>
+              </div>
+              <span class="legend" id="trend-peak"></span>
+            </div>
+            <div class="chart" id="trend"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel__head">
+              <h2 class="panel__title">Top categories</h2>
+              <span class="panel__meta" id="cats-meta"></span>
+            </div>
+            <div class="catlist" id="cats"></div>
+          </section>
+        </div>
+
+        <section class="panel">
+          <div class="panel__head">
+            <h2 class="panel__title">Recent expenses</h2>
+            <a class="link" href="#/expenses">View all
+              <svg class="icon icon--xs" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="m8 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </div>
+          <ul class="feed" id="recent"></ul>
+        </section>
+
+      </section>
+
+      <!-- ── Expenses ────────────────────────────────────────────── -->
+      <section class="view" id="view-expenses" hidden>
+        <section class="panel">
+          <div class="panel__head">
+            <h2 class="panel__title">All expenses</h2>
+            <span class="panel__meta" id="result-count"></span>
+          </div>
+
+          <form id="filter-form" class="toolbar">
+            <div class="search">
+              <svg class="icon search__icon" viewBox="0 0 20 20" aria-hidden="true">
+                <circle cx="9" cy="9" r="5.4" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                <path d="M13.2 13.2 17 17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+              </svg>
+              <input name="q" type="search" placeholder="Search expenses&hellip;" autocomplete="off"
+                     aria-label="Search expenses by title or notes" />
+            </div>
+
+            <div class="popover-wrap">
+              <button type="button" id="filter-toggle" class="btn" aria-expanded="false" aria-controls="filter-panel">
+                <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+                  <path d="M3.5 5.5h13M6 10h8M8.5 14.5h3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                </svg>
+                Filters
+                <span class="chip" id="filter-count" hidden>0</span>
+              </button>
+
+              <div class="popover" id="filter-panel" hidden>
+                <div class="popover__grid">
+                  <label class="field">
+                    <span class="field__label">Category</span>
+                    <select name="category">
+                      <option value="">All categories</option>
+                      <option value="Food">Food</option>
+                      <option value="Transport">Transport</option>
+                      <option value="Utilities">Utilities</option>
+                      <option value="Entertainment">Entertainment</option>
+                      <option value="Shopping">Shopping</option>
+                      <option value="Health">Health</option>
+                      <option value="Rent">Rent</option>
+                      <option value="Travel">Travel</option>
+                      <option value="__blank__">Uncategorized</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span class="field__label">Sort by</span>
+                    <select name="sort">
+                      <option value="date">Date</option>
+                      <option value="amount">Amount</option>
+                      <option value="title">Description</option>
+                      <option value="category">Category</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span class="field__label">Date from</span>
+                    <input type="date" name="date_from" />
+                  </label>
+                  <label class="field">
+                    <span class="field__label">Date to</span>
+                    <input type="date" name="date_to" />
+                  </label>
+                  <label class="field">
+                    <span class="field__label">Min amount</span>
+                    <input type="number" step="0.01" min="0" name="amount_min" placeholder="0" />
+                  </label>
+                  <label class="field">
+                    <span class="field__label">Max amount</span>
+                    <input type="number" step="0.01" min="0" name="amount_max" placeholder="Any" />
+                  </label>
+                  <label class="field field--full">
+                    <span class="field__label">Order</span>
+                    <select name="order">
+                      <option value="desc">Descending</option>
+                      <option value="asc">Ascending</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="popover__foot">
+                  <button type="button" id="filter-reset" class="btn btn--sm">Clear</button>
+                  <button type="submit" class="btn btn--sm btn--primary">Apply filters</button>
+                </div>
+              </div>
+            </div>
+
+            <button type="button" id="sort-btn" class="btn" title="Toggle sort direction">
+              <span id="sort-label">Sort: Date</span>
+              <span id="sort-arrow" class="arrow">&darr;</span>
+            </button>
+          </form>
+
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Date</th>
+                  <th scope="col">Description</th>
+                  <th scope="col">Category</th>
+                  <th scope="col" class="num">Amount</th>
+                  <th scope="col" class="actions-col"><span class="sr-only">Action</span></th>
+                </tr>
+              </thead>
+              <tbody id="expenses-tbody"></tbody>
+            </table>
+          </div>
+
+          <div class="pagination" id="pagination">
+            <button type="button" id="page-prev" class="btn btn--sm">
+              <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M12 4.5 6.5 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Previous
+            </button>
+            <span id="page-info" class="pagination__info">&mdash;</span>
+            <button type="button" id="page-next" class="btn btn--sm">
+              Next
+              <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="m8 4.5 5.5 5.5L8 15.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </section>
+      </section>
+
+      <!-- ── Analytics ───────────────────────────────────────────── -->
+      <section class="view" id="view-analytics" hidden>
+        <section class="panel">
+          <div class="panel__head">
+            <div>
+              <h2 class="panel__title">Monthly totals</h2>
+              <p class="panel__sub">The six months ending with the selected one.</p>
+            </div>
+          </div>
+          <div class="chart chart--months" id="months"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel__head">
+            <h2 class="panel__title">Category detail</h2>
+            <span class="panel__meta" id="detail-meta"></span>
+          </div>
+          <div class="catlist catlist--detail" id="cats-detail"></div>
+        </section>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── Add expense modal ─────────────────────────────────────────── -->
 <div id="add-modal" class="modal" hidden>
   <div class="modal__backdrop" data-close-modal></div>
   <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="add-modal-title">
     <div class="modal__head">
       <div>
         <h2 id="add-modal-title" class="modal__title">Add expense</h2>
-        <p class="modal__sub">Record a new transaction</p>
+        <p class="modal__sub">Record a new transaction.</p>
       </div>
       <button type="button" class="modal__close" data-close-modal aria-label="Close">&times;</button>
     </div>
@@ -225,10 +340,10 @@
 
       <label class="field">
         <span class="field__label">Amount <span class="req" aria-hidden="true">*</span></span>
-        <div class="input-prefix">
+        <span class="input-prefix">
           <span class="input-prefix__symbol" aria-hidden="true">&#8377;</span>
           <input name="amount" required type="number" step="0.01" min="0.01" placeholder="0.00" />
-        </div>
+        </span>
       </label>
 
       <label class="field">
@@ -265,18 +380,18 @@
   </div>
 </div>
 
-<!-- ── Delete confirmation ───────────────────────────────────────────── -->
+<!-- ── Delete confirmation ───────────────────────────────────────── -->
 <div id="confirm-modal" class="modal" hidden>
   <div class="modal__backdrop" data-close-confirm></div>
   <div class="modal__panel modal__panel--sm" role="alertdialog" aria-modal="true"
        aria-labelledby="confirm-title" aria-describedby="confirm-text">
     <div class="modal__body">
-      <div class="confirm__icon" aria-hidden="true">
+      <span class="confirm__icon" aria-hidden="true">
         <svg class="icon" viewBox="0 0 20 20">
-          <path d="M10 6.6v4.2M10 13.3v.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
-          <circle cx="10" cy="10" r="7.4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M4.5 6h11M8 6V4.6h4V6M7 6l.5 9h5l.5-9" fill="none" stroke="currentColor"
+                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-      </div>
+      </span>
       <h2 id="confirm-title" class="modal__title">Delete this expense?</h2>
       <p id="confirm-text" class="modal__sub"></p>
     </div>

@@ -1,23 +1,31 @@
 // Expense Tracker UI — vanilla JS, same-origin fetches, zero dependencies.
 //
 // The wire contract is fixed (see ../contract/openapi.yaml). This file only
-// decides how the data is presented; every request uses the documented query
-// parameters, and the list total always comes from the X-Total-Count header.
+// decides how the data is presented: every request uses the documented query
+// parameters, and list totals always come from the X-Total-Count header.
+//
+// Nothing here is hardcoded. Where the API has no purpose-built endpoint —
+// the daily trend, the month-over-month delta, the average — the number is
+// derived from real rows the documented endpoints already return.
 
 const PAGE_SIZE = 20;
-const DEFAULT_FILTERS = { sort: "date", order: "desc" };
+const RECENT_SIZE = 6;
+const FETCH_CAP = 200;          // the backend's own page_size ceiling
+const TREND_PAGE_CAP = 5;       // at most 1000 rows pulled for one month
 
-// Filters that count as "narrowing the list" — drives the toolbar badge.
+const DEFAULT_FILTERS = { sort: "date", order: "desc" };
 const NARROWING = ["q", "category", "date_from", "date_to", "amount_min", "amount_max"];
 
-// Reserved value the backend understands for "rows with no category".
-const UNCATEGORIZED = "__blank__";
+const SORT_LABELS = { date: "Date", amount: "Amount", title: "Description", category: "Category" };
 
 const KNOWN_TONES = new Set([
   "food", "transport", "utilities", "entertainment",
   "shopping", "health", "rent", "travel",
 ]);
 
+const VIEWS = ["overview", "expenses", "analytics"];
+
+let currentView = "overview";
 let currentPage = 1;
 let currentFilters = { ...DEFAULT_FILTERS };
 let totalCount = 0;
@@ -25,33 +33,52 @@ let totalCount = 0;
 // ─── DOM ──────────────────────────────────────────────────────────────────
 const $ = (id) => document.getElementById(id);
 
+const layout = document.querySelector(".layout");
 const errorBanner = $("error-banner");
 const errorText = $("error-text");
+const summaryMonth = $("summary-month");
+const monthWrap = $("month-wrap");
+const toasts = $("toasts");
+
+const head = { eyebrow: $("page-eyebrow"), title: $("page-title"), sub: $("page-sub") };
+
+const kpi = {
+  total: $("kpi-total"), totalMeta: $("kpi-total-meta"), delta: $("kpi-delta"),
+  count: $("kpi-count"), countMeta: $("kpi-count-meta"),
+  avg: $("kpi-avg"),
+  top: $("kpi-top"), topMeta: $("kpi-top-meta"),
+};
+
+const trend = $("trend");
+const trendSub = $("trend-sub");
+const trendPeak = $("trend-peak");
+const cats = $("cats");
+const catsMeta = $("cats-meta");
+const catsDetail = $("cats-detail");
+const detailMeta = $("detail-meta");
+const months = $("months");
+const recent = $("recent");
+
 const tbody = $("expenses-tbody");
 const resultCount = $("result-count");
 const pagination = $("pagination");
 const pageInfo = $("page-info");
 const pagePrev = $("page-prev");
 const pageNext = $("page-next");
-const summaryMonth = $("summary-month");
-const breakdown = $("breakdown");
-const breakdownMeta = $("breakdown-meta");
+
 const filterForm = $("filter-form");
-const filterAdvanced = $("filter-advanced");
+const filterPanel = $("filter-panel");
 const filterToggle = $("filter-toggle");
 const filterCount = $("filter-count");
+const sortBtn = $("sort-btn");
+const sortLabel = $("sort-label");
+const sortArrow = $("sort-arrow");
+
 const addForm = $("add-form");
 const addModal = $("add-modal");
 const addError = $("add-error");
 const addSubmit = $("add-submit");
 const confirmModal = $("confirm-modal");
-const toasts = $("toasts");
-
-const stat = {
-  total: $("stat-total"), totalMeta: $("stat-total-meta"),
-  count: $("stat-count"), countMeta: $("stat-count-meta"),
-  top: $("stat-top"), topMeta: $("stat-top-meta"),
-};
 
 // ─── Formatting ───────────────────────────────────────────────────────────
 const moneyFmt = new Intl.NumberFormat("en-IN", {
@@ -60,14 +87,21 @@ const moneyFmt = new Intl.NumberFormat("en-IN", {
 });
 
 const money = (n) => moneyFmt.format(Number(n) || 0);
-const count = (n) => Number(n || 0).toLocaleString("en-IN");
+const num = (n) => Number(n || 0).toLocaleString("en-IN");
+
+/** Compact axis labels: 90000 -> "₹90k". */
+function shortMoney(n) {
+  const v = Number(n) || 0;
+  if (v >= 1e7) return `₹${(v / 1e7).toFixed(v >= 1e8 ? 0 : 1)}Cr`;
+  if (v >= 1e5) return `₹${(v / 1e5).toFixed(v >= 1e6 ? 0 : 1)}L`;
+  if (v >= 1e3) return `₹${Math.round(v / 1e3)}k`;
+  return `₹${Math.round(v)}`;
+}
 
 const fmtDate = (iso) => {
   if (!iso) return "—";
   const [y, m, d] = iso.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString("en-GB", {
-    day: "2-digit", month: "short", year: "numeric",
-  });
+  return new Date(y, m - 1, d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 };
 
 const fmtMonth = (ym) => {
@@ -76,17 +110,39 @@ const fmtMonth = (ym) => {
   return new Date(y, m - 1, 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
 };
 
+const fmtMonthShort = (ym) => {
+  const [y, m] = ym.split("-").map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString("en-GB", { month: "short" });
+};
+
 const currentMonthISO = () => {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 };
 
-/** "2026-07" -> { from: "2026-07-01", to: "2026-07-31" } for the list filters. */
-function monthRange(ym) {
+const daysInMonth = (ym) => {
   const [y, m] = ym.split("-").map(Number);
-  const lastDay = new Date(y, m, 0).getDate(); // day 0 of next month
-  return { from: `${ym}-01`, to: `${ym}-${String(lastDay).padStart(2, "0")}` };
+  return new Date(y, m, 0).getDate();
+};
+
+/** "2026-07" -> { from: "2026-07-01", to: "2026-07-31" } */
+function monthRange(ym) {
+  return { from: `${ym}-01`, to: `${ym}-${String(daysInMonth(ym)).padStart(2, "0")}` };
 }
+
+/** Step a "YYYY-MM" string back by n months. */
+function shiftMonth(ym, n) {
+  const [y, m] = ym.split("-").map(Number);
+  const d = new Date(y, m - 1 - n, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+const greeting = () => {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+};
 
 const escapeHtml = (s) =>
   String(s).replace(/[&<>"']/g, (c) =>
@@ -99,6 +155,8 @@ function toneClass(category) {
   return KNOWN_TONES.has(slug) ? `tone--${slug}` : "tone--other";
 }
 
+const label = (category) => (category ? category : "Uncategorized");
+
 // ─── Feedback ─────────────────────────────────────────────────────────────
 function showError(message) {
   errorText.textContent = message;
@@ -108,10 +166,7 @@ function showError(message) {
 const clearError = () => { errorBanner.hidden = true; };
 
 $("error-dismiss").addEventListener("click", clearError);
-$("error-retry").addEventListener("click", () => {
-  clearError();
-  refresh();
-});
+$("error-retry").addEventListener("click", () => { clearError(); render(); });
 
 function toast(message, kind = "success") {
   const el = document.createElement("div");
@@ -130,15 +185,13 @@ async function describeFailure(res) {
     if (typeof body?.detail === "string") {
       detail = body.detail;
     } else if (Array.isArray(body?.detail)) {
-      // FastAPI validation errors: [{ loc: [...], msg: "..." }]
       detail = body.detail
         .map((e) => `${(e.loc || []).slice(1).join(".") || "request"}: ${e.msg}`)
         .join("; ");
     }
   } catch {
-    /* not JSON — fall through to a generic message */
+    /* not JSON — fall through */
   }
-
   if (detail) return detail;
   if (res.status === 404) return "That record no longer exists.";
   if (res.status === 422) return "Some values were not accepted. Please check the form.";
@@ -146,7 +199,6 @@ async function describeFailure(res) {
   return `The request failed (${res.status} ${res.statusText}).`;
 }
 
-// ─── Fetch wrapper ────────────────────────────────────────────────────────
 async function api(path, opts = {}) {
   let res;
   try {
@@ -159,9 +211,8 @@ async function api(path, opts = {}) {
     err.friendly = "We couldn't reach the server. Is the API still running?";
     throw err;
   }
-
   if (!res.ok) {
-    const err = new Error(`${res.status}`);
+    const err = new Error(String(res.status));
     err.status = res.status;
     err.friendly = await describeFailure(res);
     throw err;
@@ -169,32 +220,87 @@ async function api(path, opts = {}) {
   return res;
 }
 
-// ─── Skeletons ────────────────────────────────────────────────────────────
-function skeletonStats() {
-  stat.total.innerHTML = `<span class="skeleton skeleton--lg"></span>`;
-  stat.count.innerHTML = `<span class="skeleton skeleton--lg"></span>`;
-  stat.top.innerHTML = `<span class="skeleton skeleton--lg"></span>`;
-  for (const el of [stat.totalMeta, stat.countMeta, stat.topMeta]) {
-    el.innerHTML = `<span class="skeleton skeleton--sm"></span>`;
-  }
+/** GET /expenses returning both the rows and the X-Total-Count header. */
+async function listExpenses(params) {
+  const res = await api(`/expenses?${params}`);
+  const rows = await res.json();
+  const header = res.headers.get("X-Total-Count");
+  return { rows, total: header != null ? Number(header) : rows.length };
 }
 
-function skeletonBreakdown() {
-  breakdownMeta.textContent = "";
-  breakdown.innerHTML = Array.from({ length: 5 }, () => `
-    <div class="bd-row">
-      <span class="skeleton skeleton--sm" style="width:70%"></span>
-      <span class="skeleton" style="height:8px"></span>
-      <span class="skeleton skeleton--sm" style="width:64px"></span>
-    </div>`).join("");
+// ─── Routing ──────────────────────────────────────────────────────────────
+function viewFromHash() {
+  const name = (location.hash || "").replace(/^#\/?/, "");
+  return VIEWS.includes(name) ? name : "overview";
+}
+
+function setView(name) {
+  currentView = name;
+
+  for (const v of VIEWS) $(`view-${v}`).hidden = v !== name;
+  for (const link of document.querySelectorAll(".nav__item")) {
+    link.classList.toggle("is-active", link.dataset.view === name);
+  }
+
+  const month = fmtMonth(summaryMonth.value);
+  if (name === "overview") {
+    head.eyebrow.textContent = "Dashboard";
+    head.title.textContent = `${greeting()} 👋`;
+    head.sub.textContent = `Here's your spending overview for ${month}.`;
+  } else if (name === "expenses") {
+    head.eyebrow.textContent = "Expenses";
+    head.title.textContent = "All transactions";
+    head.sub.textContent = "Search, filter and manage every recorded expense.";
+  } else {
+    head.eyebrow.textContent = "Analytics";
+    head.title.textContent = "Spending analysis";
+    head.sub.textContent = `Category and month-on-month breakdown around ${month}.`;
+  }
+
+  monthWrap.hidden = name === "expenses";
+  layout.classList.remove("nav-open");
+  $("sidebar-scrim").hidden = true;
+  window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+
+  render();
+}
+
+window.addEventListener("hashchange", () => setView(viewFromHash()));
+
+$("nav-toggle").addEventListener("click", () => {
+  const open = !layout.classList.contains("nav-open");
+  layout.classList.toggle("nav-open", open);
+  $("sidebar-scrim").hidden = !open;
+});
+
+$("sidebar-scrim").addEventListener("click", () => {
+  layout.classList.remove("nav-open");
+  $("sidebar-scrim").hidden = true;
+});
+
+// ─── Skeletons ────────────────────────────────────────────────────────────
+const skelLine = (w, cls = "") => `<span class="skeleton ${cls}" style="width:${w}"></span>`;
+
+function skeletonOverview() {
+  for (const el of [kpi.total, kpi.count, kpi.avg, kpi.top]) el.innerHTML = skelLine("68%", "skeleton--lg");
+  for (const el of [kpi.totalMeta, kpi.countMeta, kpi.topMeta]) el.innerHTML = skelLine("70px", "skeleton--sm");
+  kpi.delta.innerHTML = "";
+  trend.innerHTML = `<span class="skeleton skeleton--block"></span>`;
+  trendSub.textContent = "";
+  trendPeak.textContent = "";
+  cats.innerHTML = Array.from({ length: 5 }, () =>
+    `<div class="cat">${skelLine("55%", "skeleton--sm")}${skelLine("60px", "skeleton--sm")}</div>`).join("");
+  catsMeta.textContent = "";
+  recent.innerHTML = Array.from({ length: 4 }, () =>
+    `<li class="feed__row">${skelLine("100%")}</li>`).join("");
 }
 
 function skeletonRows() {
   tbody.innerHTML = Array.from({ length: 6 }, () =>
-    `<tr class="state-row"><td colspan="5"><span class="skeleton"></span></td></tr>`).join("");
+    `<tr class="state-row"><td colspan="5">${skelLine("100%")}</td></tr>`).join("");
 }
 
-function renderState(title, detail, { action = false } = {}) {
+function renderTableState(title, detail, { action = false } = {}) {
   tbody.innerHTML = `
     <tr class="state-row">
       <td colspan="5" class="state-cell">
@@ -204,6 +310,297 @@ function renderState(title, detail, { action = false } = {}) {
       </td>
     </tr>`;
   $("state-add")?.addEventListener("click", openAddModal);
+}
+
+// ─── Overview ─────────────────────────────────────────────────────────────
+
+/** Pull every row of a month so the daily trend is built from real records. */
+async function fetchMonthRows(month) {
+  const { from, to } = monthRange(month);
+  const rows = [];
+  let total = Infinity;
+
+  for (let page = 1; page <= TREND_PAGE_CAP && rows.length < total; page++) {
+    const params = new URLSearchParams({
+      page, page_size: FETCH_CAP, date_from: from, date_to: to, sort: "date", order: "asc",
+    });
+    const res = await listExpenses(params);
+    total = res.total;
+    rows.push(...res.rows);
+    if (res.rows.length < FETCH_CAP) break;
+  }
+  return { rows, total: total === Infinity ? rows.length : total };
+}
+
+async function loadOverview() {
+  const month = summaryMonth.value || currentMonthISO();
+  skeletonOverview();
+
+  let summary;
+  let monthRows;
+  let previous = null;
+  try {
+    const [summaryRes, rowsRes, prevRes] = await Promise.all([
+      api(`/summary?month=${encodeURIComponent(month)}`).then((r) => r.json()),
+      fetchMonthRows(month),
+      api(`/summary?month=${encodeURIComponent(shiftMonth(month, 1))}`).then((r) => r.json()).catch(() => null),
+    ]);
+    summary = summaryRes;
+    monthRows = rowsRes;
+    previous = prevRes;
+  } catch (err) {
+    showError(err.friendly || "We couldn't load your dashboard.");
+    for (const el of [kpi.total, kpi.count, kpi.avg, kpi.top]) el.textContent = "—";
+    for (const el of [kpi.totalMeta, kpi.countMeta, kpi.topMeta, kpi.delta]) el.textContent = "";
+    trend.innerHTML = "";
+    cats.innerHTML = "";
+    recent.innerHTML = "";
+    return;
+  }
+
+  if (!summary || typeof summary.total !== "number" || !Array.isArray(summary.by_category)) {
+    showError("The server returned an unexpected shape for GET /summary.");
+    return;
+  }
+
+  const monthLabel = fmtMonth(summary.month);
+  const count = monthRows.total;
+
+  kpi.total.textContent = money(summary.total);
+  kpi.totalMeta.textContent = monthLabel;
+  kpi.delta.innerHTML = renderDelta(summary.total, previous?.total);
+
+  kpi.count.textContent = num(count);
+  kpi.countMeta.textContent = count === 1 ? "transaction this month" : "transactions this month";
+
+  kpi.avg.textContent = count > 0 ? money(summary.total / count) : "—";
+
+  const top = summary.by_category[0]; // backend already orders by spend, desc
+  kpi.top.textContent = top ? label(top.category) : "—";
+  kpi.topMeta.textContent = top ? money(top.total) : "";
+
+  renderTrend(monthRows.rows, summary.month);
+  renderCategories(cats, summary, catsMeta, monthLabel, 6);
+  renderRecent();
+}
+
+function renderDelta(current, prev) {
+  if (typeof prev !== "number" || prev <= 0) {
+    return `<span class="delta delta--flat">No prior month</span>`;
+  }
+  const pct = ((current - prev) / prev) * 100;
+  if (Math.abs(pct) < 0.05) return `<span class="delta delta--flat">Flat vs last month</span>`;
+  const up = pct > 0;
+  return `<span class="delta ${up ? "delta--up" : "delta--down"}">${up ? "↑" : "↓"} ${Math.abs(pct).toFixed(1)}% vs last month</span>`;
+}
+
+/**
+ * Daily spend for the month, drawn as an SVG area + line. The API has no daily
+ * aggregation endpoint, so this sums the month's real rows in the browser.
+ */
+function renderTrend(rows, month) {
+  const days = daysInMonth(month);
+  const totals = new Array(days).fill(0);
+
+  for (const r of rows) {
+    const day = Number(String(r.date).slice(8, 10));
+    if (day >= 1 && day <= days) totals[day - 1] += Number(r.amount) || 0;
+  }
+
+  const peak = Math.max(...totals);
+  if (peak <= 0) {
+    trendSub.textContent = fmtMonth(month);
+    trendPeak.textContent = "";
+    trend.innerHTML = `
+      <div class="state">
+        <div class="state-title">Nothing recorded in ${escapeHtml(fmtMonth(month))}</div>
+        <div class="state-detail">Pick another month, or add an expense.</div>
+      </div>`;
+    return;
+  }
+
+  const W = 640, H = 190, padL = 46, padR = 10, padT = 12, padB = 26;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+
+  // Round the axis ceiling up so gridlines land on readable numbers.
+  const step = Math.pow(10, Math.floor(Math.log10(peak)));
+  const ceiling = Math.ceil(peak / step) * step;
+
+  const x = (i) => padL + (days === 1 ? innerW / 2 : (i / (days - 1)) * innerW);
+  const y = (v) => padT + innerH - (v / ceiling) * innerH;
+
+  const points = totals.map((v, i) => [x(i), y(v)]);
+  const line = points.map(([px, py], i) => `${i ? "L" : "M"}${px.toFixed(1)},${py.toFixed(1)}`).join(" ");
+  const area = `${line} L${x(days - 1).toFixed(1)},${(padT + innerH).toFixed(1)} L${x(0).toFixed(1)},${(padT + innerH).toFixed(1)} Z`;
+
+  const ticks = [0, 0.5, 1].map((f) => {
+    const value = ceiling * f;
+    const py = y(value);
+    return `<line class="grid-line" x1="${padL}" y1="${py.toFixed(1)}" x2="${W - padR}" y2="${py.toFixed(1)}"/>
+            <text class="axis-label" x="${padL - 8}" y="${(py + 3.5).toFixed(1)}" text-anchor="end">${shortMoney(value)}</text>`;
+  }).join("");
+
+  // Week markers rather than 31 day labels.
+  const weeks = [];
+  for (let d = 0; d < days; d += 7) {
+    weeks.push(`<text class="axis-label" x="${x(d).toFixed(1)}" y="${H - 6}" text-anchor="middle">Week ${weeks.length + 1}</text>`);
+  }
+
+  const peakIndex = totals.indexOf(peak);
+
+  trendSub.textContent = `Daily spend across ${fmtMonth(month)}`;
+  trendPeak.textContent = `Peak ${money(peak)} on ${fmtDate(`${month}-${String(peakIndex + 1).padStart(2, "0")}`)}`;
+
+  trend.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Daily spending for ${escapeHtml(fmtMonth(month))}">
+      <defs>
+        <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      ${ticks}
+      <path d="${area}" fill="url(#trendFill)"/>
+      <path class="trend-line" d="${line}"/>
+      <circle class="trend-dot" cx="${x(peakIndex).toFixed(1)}" cy="${y(peak).toFixed(1)}" r="3.5"/>
+      ${weeks.join("")}
+    </svg>`;
+}
+
+function renderCategories(target, summary, metaEl, monthLabel, limit = Infinity) {
+  const list = summary.by_category.slice(0, limit);
+
+  if (list.length === 0) {
+    if (metaEl) metaEl.textContent = "";
+    target.innerHTML = `<div class="state"><div class="state-detail">No categories to show for ${escapeHtml(monthLabel)}.</div></div>`;
+    return;
+  }
+
+  const n = summary.by_category.length;
+  if (metaEl) metaEl.textContent = `${n} categor${n === 1 ? "y" : "ies"}`;
+
+  const max = Math.max(...list.map((c) => c.total));
+
+  target.innerHTML = list.map((c) => {
+    const blank = !c.category;
+    const share = summary.total > 0 ? (c.total / summary.total) * 100 : 0;
+    const width = max > 0 ? Math.max((c.total / max) * 100, 2) : 0;
+    return `
+      <div class="cat ${toneClass(c.category)}">
+        <div class="cat__name ${blank ? "cat__name--blank" : ""}">
+          <span class="dot"></span><span>${escapeHtml(label(c.category))}</span>
+        </div>
+        <div class="cat__amount">${money(c.total)}</div>
+        <div class="cat__track"><div class="cat__fill" style="width:${width.toFixed(1)}%"></div></div>
+        <div class="cat__pct">${share.toFixed(share < 10 ? 1 : 0)}%</div>
+      </div>`;
+  }).join("");
+}
+
+async function renderRecent() {
+  try {
+    const params = new URLSearchParams({ page: 1, page_size: RECENT_SIZE, sort: "date", order: "desc" });
+    const { rows } = await listExpenses(params);
+
+    if (rows.length === 0) {
+      recent.innerHTML = `<li class="state"><div class="state-detail">No expenses recorded yet.</div></li>`;
+      return;
+    }
+
+    recent.innerHTML = rows.map((r) => `
+      <li class="feed__row ${toneClass(r.category)}">
+        <span class="avatar" aria-hidden="true">
+          <svg viewBox="0 0 20 20">
+            <path d="M5 3.6h10v12.8l-2-1.3-2 1.3-2-1.3-2 1.3-2-1.3z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+            <path d="M7.6 7.2h4.8M7.6 10.2h3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span class="feed__body">
+          <span class="feed__title">${escapeHtml(r.title || "")}</span>
+          <span class="feed__meta">${fmtDate(r.date)} · ${escapeHtml(label(r.category))}</span>
+        </span>
+        <span class="feed__amount">${money(r.amount)}</span>
+      </li>`).join("");
+  } catch (err) {
+    recent.innerHTML = `<li class="state"><div class="state-detail">Couldn't load recent expenses.</div></li>`;
+  }
+}
+
+// ─── Analytics ────────────────────────────────────────────────────────────
+async function loadAnalytics() {
+  const month = summaryMonth.value || currentMonthISO();
+  months.innerHTML = `<span class="skeleton skeleton--block"></span>`;
+  catsDetail.innerHTML = Array.from({ length: 6 }, () =>
+    `<div class="cat">${skelLine("55%", "skeleton--sm")}${skelLine("60px", "skeleton--sm")}</div>`).join("");
+
+  const wanted = Array.from({ length: 6 }, (_, i) => shiftMonth(month, 5 - i));
+
+  let series;
+  let summary;
+  try {
+    [series, summary] = await Promise.all([
+      Promise.all(wanted.map((m) =>
+        api(`/summary?month=${encodeURIComponent(m)}`)
+          .then((r) => r.json())
+          .then((d) => ({ month: m, total: Number(d.total) || 0 })))),
+      api(`/summary?month=${encodeURIComponent(month)}`).then((r) => r.json()),
+    ]);
+  } catch (err) {
+    showError(err.friendly || "We couldn't load the analytics.");
+    months.innerHTML = "";
+    catsDetail.innerHTML = "";
+    return;
+  }
+
+  renderMonthBars(series, month);
+  detailMeta.textContent = fmtMonth(month);
+  renderCategories(catsDetail, summary, null, fmtMonth(month));
+}
+
+function renderMonthBars(series, activeMonth) {
+  const peak = Math.max(...series.map((s) => s.total));
+  if (peak <= 0) {
+    months.innerHTML = `<div class="state"><div class="state-detail">No spending recorded in this six-month window.</div></div>`;
+    return;
+  }
+
+  const W = 640, H = 190, padL = 46, padR = 10, padT = 12, padB = 26;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+
+  const step = Math.pow(10, Math.floor(Math.log10(peak)));
+  const ceiling = Math.ceil(peak / step) * step;
+
+  const slot = innerW / series.length;
+  const barW = Math.min(slot * 0.52, 46);
+
+  const ticks = [0, 0.5, 1].map((f) => {
+    const value = ceiling * f;
+    const py = padT + innerH - (value / ceiling) * innerH;
+    return `<line class="grid-line" x1="${padL}" y1="${py.toFixed(1)}" x2="${W - padR}" y2="${py.toFixed(1)}"/>
+            <text class="axis-label" x="${padL - 8}" y="${(py + 3.5).toFixed(1)}" text-anchor="end">${shortMoney(value)}</text>`;
+  }).join("");
+
+  const bars = series.map((s, i) => {
+    const cx = padL + slot * i + slot / 2;
+    const h = (s.total / ceiling) * innerH;
+    const py = padT + innerH - h;
+    const on = s.month === activeMonth ? " bar--on" : "";
+    return `
+      <g class="bar-group">
+        <rect class="bar${on}" x="${(cx - barW / 2).toFixed(1)}" y="${py.toFixed(1)}"
+              width="${barW.toFixed(1)}" height="${Math.max(h, 1).toFixed(1)}" rx="5">
+          <title>${escapeHtml(fmtMonth(s.month))}: ${money(s.total)}</title>
+        </rect>
+        <text class="axis-label" x="${cx.toFixed(1)}" y="${H - 6}" text-anchor="middle">${escapeHtml(fmtMonthShort(s.month))}</text>
+      </g>`;
+  }).join("");
+
+  months.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Monthly spending totals">
+      ${ticks}${bars}
+    </svg>`;
 }
 
 // ─── Expenses list ────────────────────────────────────────────────────────
@@ -223,13 +620,12 @@ async function loadExpenses() {
 
   let rows;
   try {
-    const res = await api(`/expenses?${buildQuery()}`);
-    rows = await res.json();
-    const header = res.headers.get("X-Total-Count");
-    totalCount = header != null ? Number(header) : rows.length;
+    const res = await listExpenses(buildQuery());
+    rows = res.rows;
+    totalCount = res.total;
   } catch (err) {
     showError(err.friendly || "We couldn't load your expenses.");
-    renderState("Couldn't load expenses", "Check the message above, then try again.");
+    renderTableState("Couldn't load expenses", "Check the message above, then try again.");
     resultCount.textContent = "";
     pagination.hidden = true;
     return;
@@ -237,7 +633,7 @@ async function loadExpenses() {
 
   if (!Array.isArray(rows)) {
     showError("The server returned an unexpected shape for GET /expenses.");
-    renderState("Unexpected response");
+    renderTableState("Unexpected response");
     return;
   }
 
@@ -250,7 +646,7 @@ async function loadExpenses() {
   }
 
   if (rows.length === 0) {
-    renderState(
+    renderTableState(
       "No expenses found",
       hasNarrowingFilters()
         ? "Try changing your filters or add a new expense."
@@ -288,8 +684,7 @@ function renderRow(r) {
                 data-amount="${money(r.amount)}" aria-label="Delete ${title}" title="Delete">
           <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
             <path d="M4.5 6h11M8 6V4.6h4V6M7 6l.5 9h5l.5-9M9 8.5v4M11 8.5v4"
-                  fill="none" stroke="currentColor" stroke-width="1.4"
-                  stroke-linecap="round" stroke-linejoin="round"/>
+                  fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
       </td>
@@ -302,107 +697,14 @@ function renderPagination(rowCount, totalPages) {
     pagination.hidden = true;
     return;
   }
-
   pagination.hidden = false;
   const first = (currentPage - 1) * PAGE_SIZE + 1;
   const last = first + rowCount - 1;
-
-  resultCount.textContent = `${count(totalCount)} record${totalCount === 1 ? "" : "s"}`;
-  pageInfo.textContent = `${count(first)}–${count(last)} of ${count(totalCount)} · Page ${currentPage} of ${totalPages}`;
+  resultCount.textContent = `${num(totalCount)} record${totalCount === 1 ? "" : "s"}`;
+  pageInfo.textContent = `${num(first)}–${num(last)} of ${num(totalCount)} · Page ${currentPage} of ${totalPages}`;
   pagePrev.disabled = currentPage <= 1;
   pageNext.disabled = currentPage >= totalPages;
 }
-
-// ─── Monthly overview ─────────────────────────────────────────────────────
-async function loadSummary() {
-  const month = summaryMonth.value || currentMonthISO();
-  skeletonStats();
-  skeletonBreakdown();
-
-  const { from, to } = monthRange(month);
-
-  let data;
-  let monthlyCount = null;
-  try {
-    // Two documented calls: /summary for money, the list header for the count.
-    const [summaryRes, countRes] = await Promise.all([
-      api(`/summary?month=${encodeURIComponent(month)}`),
-      api(`/expenses?page=1&page_size=1&date_from=${from}&date_to=${to}`),
-    ]);
-    data = await summaryRes.json();
-    monthlyCount = Number(countRes.headers.get("X-Total-Count") ?? 0);
-  } catch (err) {
-    showError(err.friendly || "We couldn't load your monthly summary.");
-    for (const el of [stat.total, stat.count, stat.top]) el.textContent = "—";
-    for (const el of [stat.totalMeta, stat.countMeta, stat.topMeta]) el.innerHTML = "&nbsp;";
-    breakdown.innerHTML = "";
-    breakdownMeta.textContent = "";
-    return;
-  }
-
-  if (!data || typeof data.total !== "number" || !Array.isArray(data.by_category)) {
-    showError("The server returned an unexpected shape for GET /summary.");
-    return;
-  }
-
-  const label = fmtMonth(data.month);
-
-  stat.total.textContent = money(data.total);
-  stat.totalMeta.textContent = label;
-
-  stat.count.textContent = count(monthlyCount);
-  stat.countMeta.textContent = monthlyCount === 1 ? "transaction this month" : "transactions this month";
-
-  // The backend already orders by_category by spend, descending.
-  const top = data.by_category[0];
-  if (top) {
-    stat.top.textContent = top.category || "Uncategorized";
-    stat.topMeta.textContent = money(top.total);
-  } else {
-    stat.top.textContent = "—";
-    stat.topMeta.innerHTML = "&nbsp;";
-  }
-
-  renderBreakdown(data, label);
-}
-
-function renderBreakdown(data, label) {
-  if (data.by_category.length === 0) {
-    breakdownMeta.textContent = "";
-    breakdown.innerHTML = `
-      <div class="state-cell">
-        <div class="state-title">Nothing recorded in ${escapeHtml(label)}</div>
-        <div class="state-detail">Pick another month, or add an expense.</div>
-      </div>`;
-    return;
-  }
-
-  const n = data.by_category.length;
-  breakdownMeta.textContent = `${n} categor${n === 1 ? "y" : "ies"} · ${label}`;
-
-  // Bars scale against the largest category so the shape stays readable even
-  // when one category dominates the month.
-  const max = Math.max(...data.by_category.map((c) => c.total));
-
-  breakdown.innerHTML = data.by_category.map((c) => {
-    const blank = !c.category;
-    const width = max > 0 ? Math.max((c.total / max) * 100, 2) : 0;
-    const share = data.total > 0 ? Math.round((c.total / data.total) * 100) : 0;
-    return `
-      <div class="bd-row ${toneClass(c.category)}">
-        <div class="bd-name ${blank ? "bd-name--blank" : ""}">${escapeHtml(blank ? "Uncategorized" : c.category)}</div>
-        <div class="bd-track"><div class="bd-fill" style="width:${width.toFixed(1)}%"></div></div>
-        <div class="bd-figures">
-          <span class="bd-value">${money(c.total)}</span>
-          <span class="bd-pct">${share}%</span>
-        </div>
-      </div>`;
-  }).join("");
-}
-
-summaryMonth.addEventListener("change", loadSummary);
-
-const refresh = () => Promise.all([loadExpenses(), loadSummary()]);
 
 // ─── Delete ───────────────────────────────────────────────────────────────
 let confirmResolve = null;
@@ -428,7 +730,6 @@ $("confirm-delete").addEventListener("click", () => closeConfirm(true));
 
 async function deleteExpense(id, title, amount) {
   if (!(await askConfirm(title, amount))) return;
-
   try {
     await api(`/expenses/${id}`, { method: "DELETE" });
   } catch (err) {
@@ -436,23 +737,33 @@ async function deleteExpense(id, title, amount) {
     toast("Could not delete the expense", "error");
     return;
   }
-
   clearError();
   toast("Expense deleted");
-  await refresh();
+  await render();
 }
 
 // ─── Filters ──────────────────────────────────────────────────────────────
-function setAdvancedOpen(open) {
-  filterAdvanced.hidden = !open;
+function setFilterPanel(open) {
+  filterPanel.hidden = !open;
   filterToggle.setAttribute("aria-expanded", String(open));
+  filterToggle.classList.toggle("is-on", open);
 }
 
-filterToggle.addEventListener("click", () => setAdvancedOpen(filterAdvanced.hidden));
+filterToggle.addEventListener("click", (e) => {
+  e.stopPropagation();
+  setFilterPanel(filterPanel.hidden);
+});
+
+document.addEventListener("click", (e) => {
+  if (!filterPanel.hidden && !filterPanel.contains(e.target) && e.target !== filterToggle) {
+    setFilterPanel(false);
+  }
+});
 
 filterForm.addEventListener("submit", (event) => {
   event.preventDefault();
   applyFilters();
+  setFilterPanel(false);
 });
 
 function applyFilters() {
@@ -469,6 +780,7 @@ function applyFilters() {
   filterCount.textContent = String(active);
   filterCount.hidden = active === 0;
 
+  syncSortButton();
   currentPage = 1;
   clearError();
   loadExpenses();
@@ -478,19 +790,35 @@ $("filter-reset").addEventListener("click", () => {
   filterForm.reset();
   currentFilters = { ...DEFAULT_FILTERS };
   filterCount.hidden = true;
+  syncSortButton();
+  currentPage = 1;
+  setFilterPanel(false);
+  loadExpenses();
+});
+
+function syncSortButton() {
+  sortLabel.textContent = `Sort: ${SORT_LABELS[currentFilters.sort] || "Date"}`;
+  sortArrow.textContent = currentFilters.order === "asc" ? "↑" : "↓";
+}
+
+// Clicking the sort button flips the direction; the field itself lives in the
+// filter panel. Both still travel as the documented `sort` / `order` params.
+sortBtn.addEventListener("click", () => {
+  const next = currentFilters.order === "asc" ? "desc" : "asc";
+  currentFilters.order = next;
+  filterForm.elements.order.value = next;
+  syncSortButton();
   currentPage = 1;
   loadExpenses();
 });
 
 pagePrev.addEventListener("click", () => {
-  if (currentPage > 1) { currentPage--; loadExpenses(); scrollToList(); }
+  if (currentPage > 1) { currentPage--; loadExpenses(); filterForm.scrollIntoView({ behavior: "smooth", block: "nearest" }); }
 });
 
 pageNext.addEventListener("click", () => {
-  currentPage++; loadExpenses(); scrollToList();
+  currentPage++; loadExpenses(); filterForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
 });
-
-const scrollToList = () => filterForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
 
 // ─── Add expense ──────────────────────────────────────────────────────────
 function openAddModal() {
@@ -518,6 +846,7 @@ document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") return;
   if (!confirmModal.hidden) closeConfirm(false);
   else if (!addModal.hidden) closeAddModal();
+  else if (!filterPanel.hidden) setFilterPanel(false);
 });
 
 addForm.addEventListener("submit", async (event) => {
@@ -555,7 +884,7 @@ addForm.addEventListener("submit", async (event) => {
   clearError();
   toast("Expense added");
   currentPage = 1;
-  await refresh();
+  await render();
 });
 
 function showFormError(message) {
@@ -563,18 +892,27 @@ function showFormError(message) {
   addError.hidden = false;
 }
 
-// ─── Boot ─────────────────────────────────────────────────────────────────
+// ─── Render + boot ────────────────────────────────────────────────────────
+function render() {
+  if (currentView === "overview") return loadOverview();
+  if (currentView === "analytics") return loadAnalytics();
+  return loadExpenses();
+}
+
+summaryMonth.addEventListener("change", () => {
+  setView(currentView); // refreshes the header copy, then re-renders
+});
 
 /**
  * Open on the month of the most recent expense rather than on today. Seeded
- * data can end months ago, and landing on an empty chart reads as a broken
+ * data can end months ago, and landing on an empty dashboard reads as a broken
  * page. Uses only documented list parameters.
  */
 async function pickInitialMonth() {
   try {
-    const res = await api("/expenses?page=1&page_size=1&sort=date&order=desc");
-    const [newest] = await res.json();
-    if (newest?.date) return newest.date.slice(0, 7);
+    const params = new URLSearchParams({ page: 1, page_size: 1, sort: "date", order: "desc" });
+    const { rows } = await listExpenses(params);
+    if (rows[0]?.date) return rows[0].date.slice(0, 7);
   } catch {
     /* fall back to today; the summary call will surface any real problem */
   }
@@ -582,9 +920,8 @@ async function pickInitialMonth() {
 }
 
 (async function boot() {
-  skeletonStats();
-  skeletonBreakdown();
-  skeletonRows();
+  skeletonOverview();
+  syncSortButton();
   summaryMonth.value = await pickInitialMonth();
-  await refresh();
+  setView(viewFromHash());
 })();
