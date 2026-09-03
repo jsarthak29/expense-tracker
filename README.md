@@ -73,8 +73,6 @@ scripts/seed.py      `python scripts/seed.py`
 tests/               conftest + 23 tests
 ui/                  the provided frontend (see Frontend)
 contract/            the OpenAPI contract — the source of truth
-api/index.py         Vercel serverless entry point
-vercel.json
 Dockerfile
 docker-compose.yml
 ```
@@ -218,8 +216,11 @@ hosted demo, with two constraints worth stating plainly:
   and seeding in `app.main.lifespan` therefore never happen on Vercel, so the
   database must already have its schema before the first request.
 
-`api/index.py` exposes the same ASGI app, and `vercel.json` rewrites every path
-to it, so the UI and the API stay on one origin exactly as they do locally.
+No `vercel.json` is needed. Vercel's Python runtime detects `app/main.py` as the
+entrypoint (it looks for `main.py` at the root or inside `app/` or `src/`,
+exporting a top-level `app`) and routes **every** request to it with the path
+intact — so the UI and the API stay on one origin exactly as they do locally.
+`.python-version` pins the runtime to 3.12.
 
 **1. Create the database** at [neon.tech](https://neon.tech) and copy the
 *pooled* connection string (the host containing `-pooler`), which is the right
